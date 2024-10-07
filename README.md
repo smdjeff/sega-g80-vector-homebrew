@@ -7,7 +7,7 @@
 * Runs as it would have in 1982 on the original Sega G80 boardsets
 * Programmed in C rather than period correct assembly
 * Runs on a Zilog Z80 at 3.86712 MHz, only 46KB ROM and 2KB RAM
-* Assisted by XY vector display hardware and two 8035 CPUs for sound and speech
+* Assisted by factory XY vector display hardware and two 8035 CPUs for sound and speech
 
 # Building the ROM yourself
 ```
