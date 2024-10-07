@@ -1,124 +1,15 @@
-# sega-xy-diagnostic
-
-## New Sega G80 diagnostics ROM
-
-| | 2024 Diagnostic ROM  | David Shuman's ROM |
-| ------------- | ------------- | ------------- |
-| Test Coverage| RAM, ROMs Speech, sounds  | RAM and XY display |
-| Test Results| Through sound boards | LED and XY display |
-| Requirements | CPU RAM | CPU RAM, XY clock, XY RAM |
-| Optional Requirements | Sound board, speech board, ROM U10,11,12 | LED, NMI, buttons |
+# sega-g80-vector-homebrew
 
 
-# Download the ROM 
+## Follow along as we develop a new game for a SEGA G80 vector display arcade from 1982. 
 
-Load into the 2716 ROM programmer of your choice and insert into the CPU socket.
-
-[2716 TEST ROM](build/testrom.rom)
-
-# Usage, what to expect
-
-* Power up boardset with ROM installed into CPU board
-* Speech "start"
-  
-* One beep: sound test starts
-  * Start button: exit
-  * Fire button: triggers next sound
-  * Thrust button: triggers previous sound
-  * Photon button: resets the USB board
-    
-* Two beeps: ram test starts
-  * USB Ram 1 speech "one", "red alert" on failure...
-  * USB Ram 2 speech "two"
-  * Vector Ram 1 speech "three"
-  * Vector Ram 2 speech "four"
-    
-* Three beeps rom tests starts
-  * 1848.prom-u1 speech "one", "red alert" on failure...
-  * ...
-  * 1857.prom-u10 speech "one" "zero"
-  * ...
-  * 1870.prom-u23 speech "two" "three"
-    
-* Four beeps: speech test starts
-
-## Sound Test
-1. Impulse
-1. Impulse End
-1. Warp
-1. Warp End
-1. Red Alert
-1. Red Alert End
-1. Phaser
-1. Photon
-1. Targeting
-1. Deny
-1. Shield Hit
-1. Enterprise Hit
-1. Enterprise Explosion
-1. Klingon Explosion
-1. Dock
-1. Starbase Hit
-1. Starbase Red
-1. Warp Suck
-1. Warp Suck End
-1. Saucer Exit
-1. Saucer Exit End
-1. Starbase Explosion
-1. Small Bonus
-1. Large Bonus
-1. Starbase Intro
-1. Klingon Intro
-1. Enterprise Intro
-1. Player Change
-1. Klingon Fire
-1. High Score Music
-1. Coin Drop Music
-1. Nomad Motion
-1. Nomad Motion End
-1. Nomad Stopped
-1. Nomad Stopped End
-
-## Speech Test
-1. Command The Enterprise
-1. Play Star Trek
-1. Welcome Aboard, Captain (Spock)
-1. Congratulations
-1. High Score
-1. Press Player One
-1. Or Player Two
-1. Start
-1. Be The Captain Of The Starship Enterprise (Scotty)
-1. Damage Repaired, Sir (Scotty)
-1. Sector Secured (Chekov)
-1. Entering Sector (Spock)
-1. Zero
-1. One
-1. Two
-1. Three
-1. Four
-1. Five
-1. Six
-1. Seven
-1. Eight
-1. Nine
-1. Point
-1. Point High Pitch
-1. Red Alert
-
-   
-# Building the ROM yourself
-```
-export PATH=${PATH}:/Users/jmathews/Desktop/z88dk/bin
-export ZCCCFG=/Users/jmathews/Desktop/z88dk/lib/config
-make
-```
+[![screenshot](https://img.youtube.com/vi/7MGQQfak8ME/0.jpg)](https://youtube.com/playlist?list=PL5WwuS3ViybqfLWkKmgaT5_N2kVawZYZk)
 
 # Bonus features
 ## Dumping factory vector graphics from the ROMs
 ```
 python3 ./sega-vector-dump.py
 ```
-![screenshot](dump/startrek/sega.png)
-![screenshot](dump/startrek/klingon.gif)
+![screenshot](sega.png)
+
 
