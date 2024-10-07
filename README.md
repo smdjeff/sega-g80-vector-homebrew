@@ -23,7 +23,7 @@ make
 [![screenshot](https://img.youtube.com/vi/7MGQQfak8ME/0.jpg)](https://youtube.com/playlist?list=PL5WwuS3ViybqfLWkKmgaT5_N2kVawZYZk)
 
 # Bonus features
-## Dumping factory vector graphics from the ROMs
+## Ever wanted to dump the vector graphics from the factory ROMs ?
 ```
 python3 ./sega-vector-dump.py
 ```
