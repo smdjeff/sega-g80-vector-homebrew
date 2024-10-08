@@ -13,12 +13,6 @@
 
 
 // #define ENABLE_UART
-// #define ENABLE_RAM_TEST
-// #define ENABLE_ROM_TEST
-//#define ENABLE_SOUND_TEST
-// #define ENABLE_SPEECH_TEST
-#define ENABLE_VECTOR_TEST
-
 
 ////////////////////////////////////
 // sega g80 memory map
@@ -30,7 +24,7 @@
 #define ROM_BOARD       (0x0800) // 46k rom board
 #define ROM_BOARD_SZ    (46*1024)
 
-#ifdef CUSTOM_DEV
+#ifdef EMBEDDED_USB
    // 4k image for the usb's 8035 (allocated at end of our image)
    #define USB_ROM_SZ   (4*1024)
    #define USB_ROM      (0x7000)  // from 28k-32k address
@@ -58,7 +52,7 @@
 #pragma output CRT_MODEL = 1 // data section copied from ROM into RAM on program start
 //#pragma output CRT_MODEL = 2 // data section zx7 compressed in ROM, decompressed into RAM on program start
 
-#ifdef CUSTOM_DEV
+#ifdef ENABLE_BOOTROM
    #pragma output CRT_ORG_CODE = 0x0800 // when using boot rom
 #else
    #pragma output CRT_ORG_CODE = 0x0000
@@ -189,7 +183,13 @@ static void memcpy(uint8_t *dst, uint8_t *src, uint16_t len) {
    }
 }
 
-#if 0
+static void memset(uint8_t *dst, uint8_t val, uint16_t len) {
+   for (uint16_t i=0; i<len; i++) {
+      *dst = val;
+      dst++;
+   }
+}
+
 static uint8_t rand(void) {
    static uint8_t x = 0xC5;
    x |= (x == 0);   // if x == 0, set x = 1 instead
@@ -198,7 +198,7 @@ static uint8_t rand(void) {
    x ^= (x & 0x03) << 6;
    return x & 0xff;
 }
-#endif
+
 
 #ifdef ENABLE_UART
 
@@ -251,28 +251,15 @@ static void sprint32(char *s, uint32_t v) {
 
 #endif // ENABLE_UART
 
-// static uint16_t xy_multiply( uint8_t x, uint8_t y ) {
-//    XY_MULTIPLIER = x;
-//    XY_MULTIPLICAND = y;
-//    delay( 1 ); // wait for wait pin?
-//    uint16_t product = XY_MULTIPLIER;
-//    product |= XY_MULTIPLIER << 8;
-//    return product;
-// }
 
-// static uint8_t math_test(void) {
-//    for (uint8_t x=0; x<255; x++) {
-//       for (uint8_t y=0; y<255; y++) {
-//          uint16_t res = xy_multiply( x, y );
-//          if ( res != x*y ) {
-//             return 1;
-//          }
-//       }
-//    }
-// }
+static uint16_t xy_multiply( uint8_t x, uint8_t y ) {
+   XY_MULTIPLICAND = x;
+   XY_MULTIPLIER = y;
+   uint16_t product = XY_MULTIPLIER;
+   product |= (uint16_t)XY_MULTIPLIER << 8;
+   return product;
+}
 
-
-#ifdef ENABLE_SOUND_TEST
 
 static uint8_t sound_wait(void) {
    // uint16_t timeout = 2000/50;
@@ -335,115 +322,6 @@ typedef enum {
    NOMAD_STOPPED_END = 0x21,
 } sound_t;
 
-const uint8_t sounds[] = {
-   IMPULSE,              // 0x04
-   IMPULSE_END,          // 0x05
-   WARP,                 // 0x06
-   WARP_END,             // 0x07
-   RED_ALERT,            // 0x0C
-   RED_ALERT_END,        // 0x0D
-   PHASER,               // 0x08
-   PHOTON,               // 0x0A
-   TARGETING,            // 0x0E
-   DENY,                 // 0x10
-   SHIELD_HIT,           // 0x12
-   ENTERPRISE_HIT,       // 0x14
-   ENTERPRISE_EXPLOSION, // 0x16
-   KLINGON_EXPLOSION,    // 0x1A
-   DOCK,                 // 0x1C
-   STARBASE_HIT,         // 0x1E
-   STARBASE_RED,         // 0x11
-   WARP_SUCK,            // 0x18
-   WARP_SUCK_END,        // 0x2F
-   SAUCER_EXIT,          // 0x19
-   SAUCER_EXIT_END,      // 0x2F
-   STARBASE_EXPLOSION,   // 0x22
-   SMALL_BONUS,          // 0x24
-   LARGE_BONUS,          // 0x25
-   STARBASE_INTRO,       // 0x26
-   KLINGON_INTRO,        // 0x27
-   ENTERPRISE_INTRO,     // 0x28
-   PLAYER_CHANGE,        // 0x29
-   KLINGON_FIRE,         // 0x2E
-   HIGH_SCORE_MUSIC,     // 0x2A
-   COIN_DROP_MUSIC,      // 0x2B
-   NOMAD_MOTION,         // 0x2C
-   NOMAD_MOTION_END,     // 0x21
-   NOMAD_STOPPED,        // 0x2D
-   NOMAD_STOPPED_END,    // 0x21
-};
-
-
-static void sound_stop(uint8_t i) {
-   // i don't think the ends work correctly
-   // switch(i) {
-   //    case WARP:
-   //       SOUND_COMMAND = WARP_END;
-   //       break;
-   //    case RED_ALERT_END:
-   //       SOUND_COMMAND = RED_ALERT_END;
-   //       break;
-   //    case WARP_SUCK:
-   //       SOUND_COMMAND = WARP_SUCK_END;
-   //       break;
-   //    case SAUCER_EXIT:
-   //       SOUND_COMMAND =SAUCER_EXIT_END;
-   //       break;
-   // }
-   // sound_wait();
-   // SOUND_COMMAND = 0x80; // reset 8035 
-   // SOUND_COMMAND = 0x00; // release reset 8035 
-}
-
-static uint8_t sound_test(void) {
-
-   do {
-
-      delay( 1 );
-
-      static uint8_t debounce_time = 0;
-      static uint8_t last_button = 0;
-
-      uint8_t button = PORT_374;
-      if ( button != last_button ) {
-         last_button = button;
-         debounce_time = 0;
-         continue;
-      }
-      if ( debounce_time < 50 ) {
-         debounce_time++;
-         continue;
-      }
-      if ( debounce_time == 50 ) {
-         debounce_time++;
-      } else {
-         continue;
-      }
-
-      static uint8_t ix = 0;
-      if ( button == BUTTON_PLAYER_1 ) {
-         return 0;
-      }
-      if ( (button == BUTTON_THRUST) || (button == BUTTON_FIRE) ) {
-         if ( (button == BUTTON_THRUST) && (ix != 0) ) {
-            ix--;
-         }
-         if ( (button == BUTTON_FIRE) && (ix != sizeof(sounds)/sizeof(sounds[0])-1) ) {
-            ix++;
-         }
-         SOUND_COMMAND = sounds[ ix ];
-         sound_wait();
-      }
-      if ( button == BUTTON_PHOTON ) {
-         sound_init();
-      }
-      
-   } while ( true );
-   return 0;
-}
-
-#endif // ENABLE_SOUND_TEST
-
 
 typedef enum {
    NO_PHRASE = 0x00,                // no phrase
@@ -484,15 +362,6 @@ static void say(uint8_t i) {
    SPEECH_COMMAND = NO_PHRASE;
 }
 
-
-#ifdef ENABLE_SPEECH_TEST
-
-static void speech_test(void) {
-     for (uint8_t i=0; i<LAST_PHRASE; i++) {
-      say( i );
-   }
-}
-
 static uint8_t divideBy10(uint8_t *value) {
     uint8_t count = 0;
     while (*value >= 10) {
@@ -529,190 +398,6 @@ static void say8(uint8_t v) {
    }
    speech_0to9( d2 );
 }
-
-// static void count_test(void) {
-//    say8( 0 );
-//    say( POINT_HIGHER_PITCH ); 
-//    say8( 10 );
-//    say( POINT_HIGHER_PITCH ); 
-//    say8( 100 );
-//    say( POINT_HIGHER_PITCH ); 
-//    say8( 255 );
-// }
-
-#endif // ENABLE_SPEECH_TEST
-
-
-static void beep( uint8_t n ) {
-#ifdef ENABLE_SOUND_TEST
-   for (uint8_t i=0; i<n; i++) {
-      SOUND_COMMAND = TARGETING;
-      delay(500);
-   }
-#endif
-}
-
-static void saySuccess( uint8_t n, bool success ) {
-#ifdef ENABLE_SPEECH_TEST
-   say8( n );
-   if ( success ) {
-//      SOUND_COMMAND = TARGETING;
-   } else {
-      say( RED_ALERT );
-   }
-#endif
-}
-
-
-#ifdef ENABLE_ROM_TEST
-
-static uint32_t crc32(uint8_t *data,uint16_t len) {
-   uint32_t crc = 0xFFFFFFFF;
-   for (uint16_t i=0; i<len; i++) {
-      uint8_t byte = data[i];
-
-      // // address
-      // if ( i % 16 == 0 ) {
-      //    char s0[] = "\r\n    : ";
-      //    sprint16( &s0[2], (uint16_t)&data[i] );
-      //    send_uart_data( s0, 8 );
-      // }
-      
-      // // data
-      // char s[] = "   ";
-      // sprint8( s, byte );
-      // send_uart_data( s, 3 );
-
-      for(uint8_t j=0;j<8;j++) {
-         uint32_t b=(byte^crc)&1;
-         crc>>=1;
-         if(b) crc=crc^0xEDB88320;
-         byte>>=1;
-      }
-   }
-   return ~crc;
-}
-
-
-#define SECURITY_FREE_ROMS 1
-
-const uint32_t rom_crc[] = {
-#if SECURITY_FREE_ROMS
-   0x78349da8, // 1848M.prom-u1;Star Trek sec free
-   0x59d6c014, // 1949M.prom-u2;Star Trek sec free
-   0x78fd68dc, // 1850.prom-u3;Star Trek
-   0x3f55ab86, // 1851.prom-u4;Star Trek
-   0x0338c964, // 1852M.prom-u5;Star Trek sec free
-   0xdfbb03e7, // 1853M.prom-u6;Star Trek sec free
-   0x60f3ae1c, // 1854M.prom-u7;Star Trek sec free
-   0x67e4922a, // 1855M.prom-u8;Star Trek sec free
-   0xf68d5ed0, // 1856M.prom-u9;Star Trek sec free
-   0x28699d45, // 1857.prom-u10;Star Trek
-   0x3a7593cb, // 1858.prom-u11;Star Trek
-   0x5b11886b, // 1859.prom-u12;Star Trek
-   0xaebe39fa, // 1860M.prom-u13;Star Trek sec free
-   0x99852d1d, // 1861.prom-u14;Star Trek
-   0x76ce27b2, // 1862.prom-u15;Star Trek
-   0xdd92d187, // 1863.prom-u16;Star Trek
-   0xe37d3a1e, // 1864.prom-u17;Star Trek
-   0xb2ec8125, // 1865.prom-u18;Star Trek
-   0x6f188354, // 1866.prom-u19;Star Trek
-   0xb0a3eae8, // 1867.prom-u20;Star Trek
-   0x8b4e2e07, // 1868.prom-u21;Star Trek
-   0xe5663070, // 1869.prom-u22;Star Trek
-   0x4340616d, // 1870.prom-u23;Star Trek
-#else   
-   0x65e3baf3, // 1848.prom-u1;Star Trek
-   0x8169fd3d, // 1849.prom-u2;Star Trek
-   0x78fd68dc, // 1850.prom-u3;Star Trek
-   0x3f55ab86, // 1851.prom-u4;Star Trek
-   0x2542ecfb, // 1852.prom-u5;Star Trek
-   0x75c2526a, // 1853.prom-u6;Star Trek
-   0x096d75d0, // 1854.prom-u7;Star Trek
-   0xbc7b9a12, // 1855.prom-u8;Star Trek
-   0xed9fe2fb, // 1856.prom-u9;Star Trek
-   0x28699d45, // 1857.prom-u10;Star Trek
-   0x3a7593cb, // 1858.prom-u11;Star Trek
-   0x5b11886b, // 1859.prom-u12;Star Trek
-   0x62eb96e6, // 1860.prom-u13;Star Trek
-   0x99852d1d, // 1861.prom-u14;Star Trek
-   0x76ce27b2, // 1862.prom-u15;Star Trek
-   0xdd92d187, // 1863.prom-u16;Star Trek
-   0xe37d3a1e, // 1864.prom-u17;Star Trek
-   0xb2ec8125, // 1865.prom-u18;Star Trek
-   0x6f188354, // 1866.prom-u19;Star Trek
-   0xb0a3eae8, // 1867.prom-u20;Star Trek
-   0x8b4e2e07, // 1868.prom-u21;Star Trek
-   0xe5663070, // 1869.prom-u22;Star Trek
-   0x4340616d, // 1870.prom-u23;Star Trek
-#endif   
-};
-
-static void rom_test(void) {
-   uint16_t address = 0x0000;
-   for (uint8_t i=0; i<sizeof(rom_crc)/sizeof(rom_crc[0]); i++) {
-      uint32_t expected_crc = rom_crc[ i ];
-      address += 0x0800;
-   //    send_uart_data( "rom ", 4 );
-   //    char s[]="         ";
-   //    sprint16( s, e.address );
-   //    send_uart_data( s, 5 );
-   //    sprint32( s, e.crc );
-   //    send_uart_data( s, 9 );
-      uint32_t crc = crc32( (uint8_t*)address, 16*1024/8 );
-   //    sprint32( s, crc );
-   //    send_uart_data( s, 9 );
-      saySuccess( 1+i, crc == expected_crc );
-   }
-}
-#endif // ENABLE_ROM_TEST
-
-
-#ifdef ENABLE_RAM_TEST
-
-static bool ram_walk(uint8_t *p) {
-   // walking 1s
-   for (uint8_t i = 0; i < 8; i++) {
-      *p = (1 << i);
-      if (*p != (1 << i)) {
-         return false;
-      }
-    }
-    // walking 0s
-    for (uint8_t i = 0; i < 8; i++) {
-        *p = ~(1 << i);
-        if (*p != ~(1 << i)) {
-           return false;
-        }
-    }
-    return true;
-}
-
-static void ram_test(void) {
-
-   // CPU_RAM holds our initalized variables and stack so it's not explicitly but 
-   // rather implicitly simply by being able to run the test program 
-
-   const uint16_t addr[] = { 
-         USB_RAM,                      USB_RAM+(USB_RAM_SZ/2),       // 1
-         USB_RAM+(USB_RAM_SZ/2),       USB_RAM+USB_RAM_SZ,           // 2
-         VECTOR_RAM,                   VECTOR_RAM+(VECTOR_RAM_SZ/2), // 3
-         VECTOR_RAM+(VECTOR_RAM_SZ/2), VECTOR_RAM+VECTOR_RAM_SZ      // 4
-    };
-
-   for (uint8_t i=0; i<sizeof(addr)/sizeof(addr[0]); i+=2) {
-      bool fail = false;
-      for (uint8_t *p=MEM_PTR(addr[i]); p<MEM_PTR(addr[i+1]); p++) {
-         if ( ram_walk( p ) ) {
-            fail = true;
-            break;
-         }
-      }
-      saySuccess( 1+ (i >> 1), !fail );
-   }
-}
-
-#endif // ENABLE_RAM_TEST
 
 
 typedef struct {
@@ -752,12 +437,10 @@ typedef struct {
 #define SEGA_ANGLE(deg)    ((uint16_t)(((float)(deg))*2.845))
 #define SIZE(x)            (x*10)
 
-#define LSB(x)   ((x)&0xFF)
-#define MSB(x)   (((x)>>8)&0xFF)
-#define LE(x)    LSB(x),MSB(x)
+#define LSB(x)             ((x)&0xFF)
+#define MSB(x)             (((x)>>8)&0xFF)
+#define LE(x)              LSB(x), MSB(x)
 
-
-#ifdef ENABLE_VECTOR_TEST
 
 
 static uint16_t spinner_vector_angle(void) {
@@ -1189,7 +872,6 @@ static void vector_test(void) {
    }
 }
 
-#endif // ENABLE_VECTOR_TEST
 
 static void init(void) {
 
@@ -1200,7 +882,7 @@ static void init(void) {
    // SOUND_COMMAND = 0xFF; // 8035 in reset and assert RAM LOAD latch
 
    // // blank the screen and clear vector ram
-   memcpy( VECTOR_RAM, 0x00, VECTOR_RAM_SZ );
+   memset( VECTOR_RAM, 0x00, VECTOR_RAM_SZ );
 
    const uint8_t s[] = { SEGA_LAST, LE(1024), LE(1024), LE(0xE40A), LE(0), 0x80,
                          SEGA_CLEAR|SEGA_LAST, 0x80, LE(0) };
@@ -1219,43 +901,17 @@ void main(void) {
 
    init();
 
-#ifdef ENABLE_SOUND_TEST
    sound_init();
-#endif
 
 #ifdef ENABLE_UART
    send_uart_data("boot\r\n",6);
 #endif
 
+   say( START );
+
    for (;;) {
 
-      say( START );
-
-      #ifdef ENABLE_SOUND_TEST
-         beep( 1 );
-         sound_test();
-      #endif
-
-      #ifdef ENABLE_RAM_TEST
-         beep( 2 );
-         ram_test(); // will corrupt usb and vector ram
-         sound_init();
-      #endif
-
-      #ifdef ENABLE_ROM_TEST
-         beep( 3 );
-         rom_test();
-      #endif
-
-      #ifdef ENABLE_SPEECH_TEST
-         beep( 4 );
-         speech_test(); 
-      #endif
-
-      #ifdef ENABLE_VECTOR_TEST
-         beep( 5 );
-         vector_test();
-      #endif   
+      vector_test();
 
    }
 
