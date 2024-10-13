@@ -1,7 +1,5 @@
 # teensy rom
 
-## Inspired by Ted Fried, MicroCore Labs ![ROM Emulator](https://github.com/MicroCoreLabs/Projects/tree/master/EPROM_Emulator)
-
 * Requires no hardware other than the Teensy 4.1
 * Plugs directly into a 2716 socket
 * Runs very fast firmware to emulate an 2716 EEPROM
@@ -14,5 +12,9 @@
 * Arduino IDE
 * Jumper wires
 
+## Inspired
+by Ted Fried, MicroCore Labs [ROM Emulator](https://github.com/MicroCoreLabs/Projects/tree/master/EPROM_Emulator)
+
+![screenshot](teensyrom.jpg)
 ![screenshot](sega-teensy.jpg)
 
