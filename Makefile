@@ -20,6 +20,7 @@ gamerom: prereq
 	@echo "builing development rom at 0x800 for use with sega-boot-rom in cpu rom socket"
 	zcc +z80 -vn -O3 -startup=1 -clib=new main.c -o $@ -create-app -DEMBEDDED_USB -DENABLE_BOOTROM -Cz"--rombase=0x0800 --romsize=30720"
 	@mv $@* build/ 2>/dev/null || true
+	hexdump build/$@.rom
 	truncate -s 2K build/$@.bin
 	cat build/$@.rom >> build/$@.bin
 	truncate -s 28K build/$@.bin

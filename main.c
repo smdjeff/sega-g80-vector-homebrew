@@ -16,8 +16,6 @@
 
 ////////////////////////////////////
 // sega g80 memory map
-#define MEM_PTR(x)      ((volatile uint8_t*)(x))
-
 #define CPU_ROM         (0x0000) // 2k power on and diagnostics rom (cpu board)
 #define CPU_ROM_SZ      (2*1024)
 
@@ -200,6 +198,88 @@ static uint8_t rand(void) {
 }
 
 
+static uint16_t xy_multiply( uint8_t x, uint8_t y ) {
+   XY_MULTIPLICAND = x;
+   XY_MULTIPLIER = y;
+   uint16_t product = XY_MULTIPLIER;
+   product |= (uint16_t)XY_MULTIPLIER << 8;
+   return product;
+}
+
+#define LSB(x)   ((x)&0xFF)
+#define MSB(x)   (((x)>>8)&0xFF)
+
+
+#if 0
+static uint16_t div_16(uint16_t u, uint16_t v) {
+    uint16_t count = 0;
+    while (u >= v) {
+        u -= v;
+        count++;
+    }
+    return count;
+}
+#else
+static uint8_t clz8(uint8_t x) {
+    const uint8_t lookup[16] = { 4, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+    uint8_t upper = x >> 4;
+    uint8_t lower = x & 0x0F;
+    return upper ? lookup[upper] : 4 + lookup[lower];
+}
+
+
+static uint8_t clz(uint16_t x) {
+    uint8_t upper = MSB(x);
+    uint8_t lower = LSB(x);
+    return upper ? clz8(upper) : 8 + clz8(lower);
+}
+
+static uint16_t div_16(uint16_t u, uint16_t v) {
+   uint16_t q = 0;
+   int k = clz(v) - clz(u);
+   switch (k) {
+      case 15: if (v <= (u >> 15)) { u -= v << 15; q += 1 << 15; }
+      case 14: if (v <= (u >> 14)) { u -= v << 14; q += 1 << 14; }
+      case 13: if (v <= (u >> 13)) { u -= v << 13; q += 1 << 13; }
+      case 12: if (v <= (u >> 12)) { u -= v << 12; q += 1 << 12; }
+      case 11: if (v <= (u >> 11)) { u -= v << 11; q += 1 << 11; }
+      case 10: if (v <= (u >> 10)) { u -= v << 10; q += 1 << 10; }
+      case  9: if (v <= (u >>  9)) { u -= v <<  9; q += 1 <<  9; }
+      case  8: if (v <= (u >>  8)) { u -= v <<  8; q += 1 <<  8; }
+      case  7: if (v <= (u >>  7)) { u -= v <<  7; q += 1 <<  7; }
+      case  6: if (v <= (u >>  6)) { u -= v <<  6; q += 1 <<  6; }
+      case  5: if (v <= (u >>  5)) { u -= v <<  5; q += 1 <<  5; }
+      case  4: if (v <= (u >>  4)) { u -= v <<  4; q += 1 <<  4; }
+      case  3: if (v <= (u >>  3)) { u -= v <<  3; q += 1 <<  3; }
+      case  2: if (v <= (u >>  2)) { u -= v <<  2; q += 1 <<  2; }
+      case  1: if (v <= (u >>  1)) { u -= v <<  1; q += 1 <<  1; }
+      case  0: if (v <= (u >>  0)) { u -= v <<  0; q += 1 <<  0; }
+      default: break;
+   }
+   return q;
+}
+
+#endif
+
+static uint8_t divideBy10(uint8_t *value) {
+    uint8_t count = 0;
+    while (*value >= 10) {
+        *value -= 10;
+        count++;
+    }
+    return count;
+}
+
+static uint8_t divideBy100(uint8_t *value) {
+    uint8_t count = 0;
+    while (*value >= 100) {
+        *value -= 100;
+        count++;
+    }
+    return count;
+}
+
+
 #ifdef ENABLE_UART
 
 static void send_uart_byte(uint8_t b) {
@@ -250,15 +330,6 @@ static void sprint32(char *s, uint32_t v) {
 }
 
 #endif // ENABLE_UART
-
-
-static uint16_t xy_multiply( uint8_t x, uint8_t y ) {
-   XY_MULTIPLICAND = x;
-   XY_MULTIPLIER = y;
-   uint16_t product = XY_MULTIPLIER;
-   product |= (uint16_t)XY_MULTIPLIER << 8;
-   return product;
-}
 
 
 static uint8_t sound_wait(void) {
@@ -362,23 +433,6 @@ static void say(uint8_t i) {
    SPEECH_COMMAND = NO_PHRASE;
 }
 
-static uint8_t divideBy10(uint8_t *value) {
-    uint8_t count = 0;
-    while (*value >= 10) {
-        *value -= 10;
-        count++;
-    }
-    return count;
-}
-
-static uint8_t divideBy100(uint8_t *value) {
-    uint8_t count = 0;
-    while (*value >= 100) {
-        *value -= 100;
-        count++;
-    }
-    return count;
-}
 static void speech_0to9(uint8_t v) {
    if ( v <= 9 ) {
       say( ZERO + v);
@@ -436,11 +490,7 @@ typedef struct {
 #define SEGA_COLOR_WHITE   (SEGA_COLOR_RED|SEGA_COLOR_GREEN|SEGA_COLOR_BLUE)
 #define SEGA_ANGLE(deg)    ((uint16_t)(((float)(deg))*2.845))
 #define SIZE(x)            (x*10)
-
-#define LSB(x)             ((x)&0xFF)
-#define MSB(x)             (((x)>>8)&0xFF)
 #define LE(x)              LSB(x), MSB(x)
-
 
 
 static uint16_t spinner_vector_angle(void) {
