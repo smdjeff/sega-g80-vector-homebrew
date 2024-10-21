@@ -52,10 +52,11 @@
 
 #ifdef ENABLE_BOOTROM
    #pragma output CRT_ORG_CODE = 0x0800 // when using boot rom
+#   #pragma output CRT_ORG_VECTOR_TABLE = 0x0000
 #else
    #pragma output CRT_ORG_CODE = 0x0000
 #endif
-// #pragma output CRT_ORG_VECTOR_TABLE = 0x0800 
+
 
 #pragma output REGISTER_SP = 0xCFFF
 
@@ -794,15 +795,15 @@ static void vector_test(void) {
       #define SYM_TANK  2
       SEGA_VISIBLE, LE(1024),     LE(1024),     LE(VEC_BASE+ADDR_TANK),  LE(SEGA_ANGLE(0)),   0x80,
       #define SYM_TREAD0 3
-      SEGA_VISIBLE, LE(1024-70), LE(1024+80), LE(VEC_BASE+ADDR_TREAD), LE(SEGA_ANGLE(0)),   0x80,
+      0,            LE(1024-70), LE(1024+80), LE(VEC_BASE+ADDR_TREAD), LE(SEGA_ANGLE(0)),   0x80,
       #define SYM_TREAD1 4
-      SEGA_VISIBLE, LE(1024+70-32), LE(1024+80), LE(VEC_BASE+ADDR_TREAD), LE(SEGA_ANGLE(0)),   0x80,
+      0,            LE(1024+70-32), LE(1024+80), LE(VEC_BASE+ADDR_TREAD), LE(SEGA_ANGLE(0)),   0x80,
       #define SYM_TURRET 5
       SEGA_VISIBLE, LE(1024),     LE(1024),     LE(VEC_BASE+ADDR_TURRET), LE(SEGA_ANGLE(0)),   0x80,
       #define SYM_BARREL 6
       SEGA_VISIBLE, LE(1024),     LE(1024),     LE(VEC_BASE+ADDR_BARREL), LE(SEGA_ANGLE(0)),   0x80,
       #define SYM_FLAME 7
-      0, LE(1024),     LE(1024),     LE(VEC_BASE+ADDR_FLAME), LE(SEGA_ANGLE(0)),   0x80,
+      0,            LE(1024),     LE(1024),     LE(VEC_BASE+ADDR_FLAME), LE(SEGA_ANGLE(0)),   0x80,
 
       #define SYM_CHOPPER 8
       SEGA_VISIBLE, LE(1024+200), LE(1024+350), LE(VEC_BASE+ADDR_CHOPPER), LE(0),     0x80,
@@ -810,7 +811,7 @@ static void vector_test(void) {
       SEGA_VISIBLE, LE(1024+200), LE(1024+350), LE(VEC_BASE+ADDR_BLADE), LE(0),     0x80,
 
       #define SYM_CUBE0 10
-      SEGA_VISIBLE,           LE(MIN_X), LE(MIN_Y), LE(VEC_BASE+CUBE_IX), LE(0),     0x80,
+      SEGA_VISIBLE,           LE(MIN_X), LE(MIN_Y), LE(VEC_BASE+CUBE_IX), LE(0),     0xf0,
       #define SYM_CUBE1 11
       SEGA_VISIBLE,           LE(MIN_X), LE(1024), LE(VEC_BASE+CUBE_IX), LE(0),     0x80,
       #define SYM_CUBE2 12
@@ -912,8 +913,6 @@ static void vector_test(void) {
                   vectors[CUBE_IX+FIELD_COLOR(10)+0] = SEGA_CLEAR;
                   vectors[CUBE_IX+FIELD_COLOR(11)+0] = SEGA_CLEAR;
                }
-            }
-
 
 
             // uint16_t d[] = {VEC_BASE+ADDR_0,VEC_BASE+ADDR_1,VEC_BASE+ADDR_2,VEC_BASE+ADDR_3,VEC_BASE+ADDR_4,VEC_BASE+ADDR_5,VEC_BASE+ADDR_6,VEC_BASE+ADDR_7,VEC_BASE+ADDR_8,VEC_BASE+ADDR_9};

@@ -37,7 +37,7 @@ bootrom: prereq
 # brew install python-tk
 
 PROGRAMMER = python3 ~/Downloads/EPROM_EMU_NG_2.0rc9.py
-UART = /dev/cu.usbserial-14110
+UART = /dev/cu.usbserial-B00050RO
 
 flash:
 	 ${PROGRAMMER} -mem 27256 -spi n -auto y -start 0 build/gamerom.bin ${UART}
