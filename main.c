@@ -893,14 +893,14 @@ static void vector_test(void) {
                // SEGA_ANGLE( (y - 125) / 10 );
                vectors[CUBE_IX+FIELD_ANGLE(0)+0] = LSB(ground_a);
                vectors[CUBE_IX+FIELD_ANGLE(0)+1] = MSB(ground_a);
-               vectors[CUBE_IX+FIELD_ANGLE(3)+0] = LSB(ground_a);
-               vectors[CUBE_IX+FIELD_ANGLE(3)+1] = MSB(ground_a);
+               vectors[CUBE_IX+FIELD_ANGLE(3)+0] = LSB(ground_a+SEGA_ANGLE(180));
+               vectors[CUBE_IX+FIELD_ANGLE(3)+1] = MSB(ground_a+SEGA_ANGLE(180));
                vectors[CUBE_IX+FIELD_ANGLE(8)+0] = LSB(ground_a);
                vectors[CUBE_IX+FIELD_ANGLE(8)+1] = MSB(ground_a);
-               vectors[CUBE_IX+FIELD_ANGLE(11)+0] = LSB(ground_a);
-               vectors[CUBE_IX+FIELD_ANGLE(11)+1] = MSB(ground_a);
+               vectors[CUBE_IX+FIELD_ANGLE(11)+0] = LSB(ground_a+SEGA_ANGLE(180));
+               vectors[CUBE_IX+FIELD_ANGLE(11)+1] = MSB(ground_a+SEGA_ANGLE(180));
 
-               if ( ground_y < 1024 ) {
+               if ( ground_y > 1024 ) {
                   // vectors 1,2 invisible below horizon
                   vectors[CUBE_IX+FIELD_COLOR(0)+0] = SEGA_CLEAR;
                   vectors[CUBE_IX+FIELD_COLOR(1)+0] = SEGA_CLEAR;
