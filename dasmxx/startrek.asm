@@ -7,8 +7,10 @@
 
 
 VECTOR_RESET:
-    0000:    C3 06 00       JP       $0006
+    0000:    C3 06 00       JP       VECTOR_RESET_FUNC
     0003:    C3 1A 01       JP       $011A
+
+VECTOR_RESET_FUNC:
     0006:    F3             DI       
     0007:    97             SUB      A, A
     0008:    21 0B C8       LD       HL, #$C80B
@@ -25,7 +27,7 @@ VECTOR_RESET:
     001F:    22 00 C8       LD       (CPU_RAM), HL
     0022:    21 1A 01       LD       HL, #$011A
     0025:    18 07          JR       $002E
-    0027:    FF             RST      $38
+    0027:    FF             RST      $38 ; VECTOR_INT
     0028:    E5             PUSH     HL
     0029:    2A 02 C8       LD       HL, ($C802)
     002C:    E3             EX       (SP), HL
@@ -33,25 +35,17 @@ VECTOR_RESET:
     002E:    22 02 C8       LD       ($C802), HL
     0031:    FB             EI       
     0032:    76             HALT     
-
-;----------------------------------------------------------------
-;        Function: VECTOR_INT
-
-VECTOR_INT:
     0033:    C3 00 08       JP       ROM_BOARD
     0036:    FF             RST      $38
     0037:    FF             RST      $38
-SPEECH_COMMAND:
-    0038:    C3 69 00       JP       $0069
-SPEECH_TIMER_CTL:
+
+VECTOR_INT:
+    0038:    C3 69 00       JP       VECTOR_INT_FUNC
+
     003B:    14             INC      D
-SPEECH_TIMER_8253_0:
     003C:    00             NOP      
-SPEECH_TIMER_8253_1:
     003D:    13             INC      DE
-SPEECH_TIMER_8253_2:
     003E:    00             NOP      
-SOUND_COMMAND:
     003F:    12             LD       (DE), A
     0040:    00             NOP      
     0041:    11 00 21       LD       DE, #$2100
@@ -82,11 +76,10 @@ SOUND_COMMAND:
     0064:    FF             RST      $38
     0065:    FF             RST      $38
 
-;----------------------------------------------------------------
-;        Function: VECTOR_NMI
-
 VECTOR_NMI:
-    0066:    C3 55 01       JP       $0155
+    0066:    C3 55 01       JP       VECTOR_NMI_FUNC
+
+VECTOR_INT_FUNC:
     0069:    E5             PUSH     HL
     006A:    F5             PUSH     AF
     006B:    21 10 C8       LD       HL, #$C810
@@ -104,6 +97,7 @@ VECTOR_NMI:
     0081:    E3             EX       (SP), HL
     0082:    FB             EI       
     0083:    C9             RET      
+    
     0084:    C5             PUSH     BC
     0085:    D5             PUSH     DE
     0086:    57             LD       D, A
@@ -138,11 +132,8 @@ VECTOR_NMI:
     00B8:    CB 15          RL       L
     00BA:    0D             DEC      C
     00BB:    10 F5          DJNZ     $00B2
-XY_MULTIPLICAND:
     00BD:    7D             LD       A, L
-XY_MULTIPLIER:
     00BE:    BB             CP       A, E
-XY_INIT:
     00BF:    21 0D C8       LD       HL, #$C80D
     00C2:    28 07          JR       Z, $00CB
     00C4:    CB 7A          BIT      7, D
@@ -180,9 +171,7 @@ XY_INIT:
     00F5:    77             LD       (HL), A
     00F6:    1A             LD       A, (DE)
     00F7:    1F             RRA      
-IO_EXPANDER:
     00F8:    1F             RRA      
-IO_EXPANDER_F9:
     00F9:    1F             RRA      
     00FA:    1F             RRA      
     00FB:    E6 0F          AND      A, #$0F
@@ -244,7 +233,9 @@ IO_EXPANDER_F9:
     0150:    23             INC      HL
     0151:    36 00          LD       (HL), #$00
     0153:    FB             EI       
-    0154:    C9             RET      
+    0154:    C9             RET
+
+VECTOR_NMI_FUNC:    
     0155:    0E FF          LD       C, #$FF
     0157:    21 00 C8       LD       HL, CPU_RAM
     015A:    3E D0          LD       A, #$D0

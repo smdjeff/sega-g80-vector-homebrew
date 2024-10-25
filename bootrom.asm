@@ -27,6 +27,7 @@
 ;	JP  0830h
 
 	ds	38h-$   ; IM 1
+	EI
 	RETI
 
 	ds	66h-$   ; NMI
