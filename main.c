@@ -682,7 +682,7 @@ static uint16_t spinner_vector_angle(void) {
       uint8_t delta = lastvalue - value;
       // spinner angle in degrees is about 5.6 * value
       // vector is SEGA_ANGLE( angle ), so 2.845 * 5.6 = ~16
-      delta <<= 4;  // x 16
+//      delta <<= 4;  // x 16
       if (dir) {
          // only ever counts down so we have to account for direction bit
          angle += delta;
@@ -872,16 +872,20 @@ static void vector_test(void) {
      SEGA_COLOR_RED|SEGA_LAST,         SIZE(3),   LE(SEGA_ANGLE(225)),
 
      #define V_MISSILE (V_FLAME+11)
-     SEGA_CLEAR,                       SIZE(8),   LE(SEGA_ANGLE(0)),
-     SEGA_COLOR_YELLOW,                SIZE(3.4), LE(SEGA_ANGLE(158)),
-     SEGA_COLOR_YELLOW,                SIZE(4),   LE(SEGA_ANGLE(180)),
+     SEGA_CLEAR,                       SIZE(0),   LE(SEGA_ANGLE(0)),
+     SEGA_CLEAR,                       SIZE(0),   LE(SEGA_ANGLE(0)),
+     SEGA_CLEAR,                       SIZE(0),   LE(SEGA_ANGLE(0)),
+     SEGA_CLEAR,                       SIZE(0),   LE(SEGA_ANGLE(0)),
+     SEGA_CLEAR,                       SIZE(18),  LE(SEGA_ANGLE(0)),
+     SEGA_COLOR_YELLOW,                SIZE(1.2), LE(SEGA_ANGLE(158)),
+     SEGA_COLOR_YELLOW,                SIZE(2),   LE(SEGA_ANGLE(180)),
      SEGA_COLOR_YELLOW,                SIZE(1),   LE(SEGA_ANGLE(135)),
-     SEGA_COLOR_YELLOW,                SIZE(4),   LE(SEGA_ANGLE(270)),
+     SEGA_COLOR_YELLOW,                SIZE(2.2), LE(SEGA_ANGLE(270)),
      SEGA_COLOR_YELLOW,                SIZE(1),   LE(SEGA_ANGLE(45)),
-     SEGA_COLOR_YELLOW,                SIZE(4),   LE(SEGA_ANGLE(0)),
-     SEGA_COLOR_YELLOW|SEGA_LAST,      SIZE(3.4), LE(SEGA_ANGLE(22)),
+     SEGA_COLOR_YELLOW,                SIZE(2),   LE(SEGA_ANGLE(0)),
+     SEGA_COLOR_YELLOW|SEGA_LAST,      SIZE(1.2), LE(SEGA_ANGLE(22)),
 
-     #define V_BLADE (V_MISSILE+8)
+     #define V_BLADE (V_MISSILE+12)
      SEGA_COLOR_CYAN,                  SIZE(1.3), LE(SEGA_ANGLE(55)),
      SEGA_COLOR_CYAN,                  SIZE(9),   LE(SEGA_ANGLE(90)),
      SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(180)),
@@ -974,18 +978,21 @@ static void vector_test(void) {
       #define S_FLAME 7
       0,            LE(1024), LE(1024), LE(V_ADDR(V_FLAME)), LE(SEGA_ANGLE(0)),   0x40,
 
-      #define S_CHOPPER 8
+      #define S_MISSLE 8
+      0,            LE(1024), LE(1024), LE(V_ADDR(V_MISSILE)), LE(SEGA_ANGLE(0)),   0x40,
+
+      #define S_CHOPPER 9
       SEGA_VISIBLE, LE(1024), LE(MAX_Y-35), LE(V_ADDR(V_CHOPPER)), LE(0),     0x40,
-      #define S_BLADE 9
+      #define S_BLADE 10
       SEGA_VISIBLE, LE(1024), LE(MAX_Y-35), LE(V_ADDR(V_BLADE)), LE(0),     0x40,
 
-      #define S_CUBE0 10
+      #define S_CUBE0 11
       SEGA_VISIBLE, LE(MIN_X), LE(MIN_Y), LE(V_ADDR(V_CUBE)), LE(0),     0xf0,
-      #define S_CUBE1 11
+      #define S_CUBE1 12
       0,            LE(MIN_X), LE(1024), LE(V_ADDR(V_CUBE)), LE(0),     0x80,
-      #define S_CUBE2 12
+      #define S_CUBE2 13
       0,            LE(MAX_X), LE(MIN_Y), LE(V_ADDR(V_CUBE)), LE(0),     0x80,
-      #define S_CUBE3 13
+      #define S_CUBE3 14
       0|SEGA_LAST,  LE(MAX_X), LE(1024), LE(V_ADDR(V_CUBE)), LE(0),     0x80,
    };
    memcpy( symbols, symbol, sizeof(symbol) );
@@ -1006,6 +1013,9 @@ static void vector_test(void) {
             symbols[ SFIELD_ADDR_L(S_DIG2) ] = LSB(lut[d2]);
             symbols[ SFIELD_ADDR_H(S_DIG2) ] = MSB(lut[d2]);
 
+            uint16_t vec_angle = spinner_vector_angle();
+            static uint8_t missle = 0;
+
             static uint8_t ct=0;
             if ( ct == 0 ) {
                uint8_t button = PORT_374;
@@ -1013,6 +1023,10 @@ static void vector_test(void) {
                   ct = 30;
                   SOUND_COMMAND = TANK_FIRE;
                   symbols[ SFIELD_COLOR(S_FLAME) ] = SEGA_VISIBLE;
+                  symbols[ SFIELD_ANGLE_L(S_MISSLE) ] = LSB( vec_angle ); 
+                  symbols[ SFIELD_ANGLE_H(S_MISSLE) ] = MSB( vec_angle );
+                  symbols[ SFIELD_COLOR(S_MISSLE)] = SEGA_VISIBLE;
+                  missle = 0;
                }
             }
             if (ct>=30) {
@@ -1027,9 +1041,27 @@ static void vector_test(void) {
                ct = 0;
             }
 
+            if ( symbols[ SFIELD_COLOR(S_MISSLE) ] == SEGA_VISIBLE ) {
+               if (missle < 250 ) {
+                  missle += 5;
+                  vectors[ VFIELD_SIZE(V_MISSILE+0) ] = missle;
+                  vectors[ VFIELD_SIZE(V_MISSILE+1) ] = missle;
+                  vectors[ VFIELD_SIZE(V_MISSILE+2) ] = missle;
+                  vectors[ VFIELD_SIZE(V_MISSILE+3) ] = missle;
+               } else {
+                  symbols[ SFIELD_COLOR(S_MISSLE)] = 0;
+               }
+            }
+
             static uint16_t flight_x = 1024;
+            static uint16_t flight_y = 1024;
             if (flight_x<MIN_X) {
                flight_x=MAX_X;
+               flight_y = 1024-128 + (rand() << 1);
+               symbols[ SFIELD_Y_L(S_CHOPPER) ] = LSB(flight_y);
+               symbols[ SFIELD_Y_H(S_CHOPPER) ] = MSB(flight_y);
+               symbols[ SFIELD_Y_L(S_BLADE) ] = LSB(flight_y);
+               symbols[ SFIELD_Y_H(S_BLADE) ] = MSB(flight_y);
             }
             flight_x -= 4;
             symbols[ SFIELD_X_L(S_CHOPPER) ] = LSB(flight_x);
@@ -1042,7 +1074,6 @@ static void vector_test(void) {
             symbols[ SFIELD_ANGLE_L(S_BLADE) ] = LSB( blade_angle ); 
             symbols[ SFIELD_ANGLE_H(S_BLADE) ] = MSB( blade_angle );
 
-            uint16_t vec_angle = spinner_vector_angle();
             uint8_t syms[] = {S_BARREL*10,S_FLAME*10,S_TURRET*10};
             for (uint8_t i=0; i<sizeof(syms)/sizeof(syms[0]); i++) {
                uint8_t ix = syms[i];
