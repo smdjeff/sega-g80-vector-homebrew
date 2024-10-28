@@ -138,6 +138,11 @@ __sfr __at 0x3f SOUND_COMMAND;
 static uint8_t score0 = 0;
 static uint8_t score = 0;
 
+#define BASE_DRUM    0x2E
+#define SNARE_DRUM   0x1E
+#define TANK_MOVE    0x00
+#define TANK_FIRE    0x1A
+
 // NMI int (the cpu board button was pushed)
 void z80_nmi(void) __critical __interrupt {
    score0++;
@@ -153,6 +158,25 @@ void z80_nmi(void) __critical __interrupt {
 //        - signal comes from 15468480 crystal, divided by 3, and then by 0x1f788
 void z80_rst_38h (void) __critical __interrupt(0) {
    score++;
+
+   // this is a 25ms timer
+   static uint8_t div = 0;
+   static uint8_t ix = 0;
+   if ( div >= 250/25 ) {
+      div = 0;
+      const uint8_t track0[] = { BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
+                                 BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM, 
+                                 BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
+                                 BASE_DRUM, SNARE_DRUM,  SNARE_DRUM, BASE_DRUM };
+      const uint8_t track[]  = { BASE_DRUM,          0,  SNARE_DRUM,         0,
+                                 BASE_DRUM,  BASE_DRUM,  SNARE_DRUM,         0, 
+                                 BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
+                                         0,  BASE_DRUM,  SNARE_DRUM,         0 };
+      SOUND_COMMAND = track[ ix ];
+      ix++;
+      if (ix>=sizeof(track)) ix = 0;
+   }
+   div++;
 }
 
 
@@ -987,7 +1011,7 @@ static void vector_test(void) {
                uint8_t button = PORT_374;
                if ( button == BUTTON_FIRE ) {
                   ct = 30;
-                  SOUND_COMMAND = 0x1a;
+                  SOUND_COMMAND = TANK_FIRE;
                   symbols[ SFIELD_COLOR(S_FLAME) ] = SEGA_VISIBLE;
                }
             }
@@ -1029,7 +1053,7 @@ static void vector_test(void) {
 
             if ( PORT_374 == BUTTON_THRUST ) {
 
-               SOUND_COMMAND = 0x1E;
+               SOUND_COMMAND = TANK_MOVE;
                static uint8_t l = 10;
                vectors[ VFIELD_SIZE(V_TREAD+1) ] = l;
                if ( l < 40 ) {
