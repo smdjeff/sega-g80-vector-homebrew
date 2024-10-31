@@ -148,10 +148,10 @@ def drawSegaSymbol( vectors, speed ):
 
     ix = 0
     for v in vectors:
-        ix += 1
         skk.setheading( (90 - v.angle) )
         drawVector( v.visible, v.color, v.length/2.0 )
         skk.write(f"{ix}")
+        ix += 1
         drawVector( v.visible, v.color, v.length/2.0 )
         wn.update()
         time.sleep(0.01)
