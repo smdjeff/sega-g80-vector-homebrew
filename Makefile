@@ -5,7 +5,7 @@
 
 
 
-all: bigrom gamerom bootrom
+all: bigrom bootrom
 
 prereq:
 	@mkdir -p build
@@ -19,20 +19,18 @@ clean:
 # then romulator can be quickly loaded to a single large rom on the ROM board
 
 bigrom: prereq
-	@echo "builing big 32kb rom"
-	zcc +z80 -vn -O3 -startup=1 -clib=new main.c -o $@ -create-app -DEMBEDDED_USB -Cz"--rombase=0x0000 --romsize=32768"
+	@echo "building big 32kb rom"
+	zcc +z80 -vn -O2 -startup=1 -clib=new main.c -o $@ -create-app -DEMBEDDED_USB -Cz"--rombase=0x0000 --romsize=32768"
 	@mv $@* build/ 2>/dev/null || true
-	hexdump build/$@.rom
-	crc32 build/$@.rom
+	@printf 'code size: ' && stat -f '%z' build/$@_CODE.bin 
 	truncate -s 26K build/$@.rom
 	cat usbrom.bin >> build/$@.rom
 
 gamerom: prereq
-	@echo "builing development rom at 0x800 for use with sega-boot-rom in cpu rom socket"
-	zcc +z80 -vn -O3 -startup=1 -clib=new main.c -o $@ -create-app -DEMBEDDED_USB -DENABLE_BOOTROM -Cz"--rombase=0x0800 --romsize=30720"
+	@echo "building development rom at 0x800 for use with sega-boot-rom in cpu rom socket"
+	zcc +z80 -vn -O2 -startup=1 -clib=new main.c -o $@ -create-app -DEMBEDDED_USB -DENABLE_BOOTROM -Cz"--rombase=0x0800 --romsize=30720"
 	@mv $@* build/ 2>/dev/null || true
-	hexdump build/$@.rom
-	crc32 build/$@.rom
+	@printf 'code size: ' && stat -f '%z' build/$@_CODE.bin 
 	truncate -s 2K build/$@.bin
 	cat build/$@.rom >> build/$@.bin
 	truncate -s 26K build/$@.bin
