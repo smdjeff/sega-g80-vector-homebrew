@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 
 // #define ENABLE_UART
@@ -189,18 +190,6 @@ static void delay(uint16_t ms) {
    }
 }
 
-static void memcpy(uint8_t *dst, uint8_t *src, uint16_t len) {
-   for (uint16_t i=0; i<len; i++) {
-      dst[i] = src[i];
-   }
-}
-
-static void memset(uint8_t *dst, uint8_t val, uint16_t len) {
-   for (uint16_t i=0; i<len; i++) {
-      dst[i] = val;
-   }
-}
-
 static uint8_t rand(void) {
    static uint8_t x = 0xC5;
    x |= (x == 0);   // if x == 0, set x = 1 instead
@@ -223,16 +212,6 @@ static uint16_t xy_multiply( uint8_t x, uint8_t y ) {
 #define MSB(x) (uint8_t)(((uint16_t)(x) >> 8) & 0xFF)
 
 
-#if 0
-static uint16_t div_16(uint16_t u, uint16_t v) {
-    uint16_t count = 0;
-    while (u >= v) {
-        u -= v;
-        count++;
-    }
-    return count;
-}
-#else
 static uint8_t clz8(uint8_t x) {
     const uint8_t lookup[16] = { 4, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
     uint8_t upper = x >> 4;
@@ -272,7 +251,6 @@ static uint16_t div_16(uint16_t u, uint16_t v) {
    return q;
 }
 
-#endif
 
 static uint8_t divideBy10(uint8_t *value) {
     uint8_t count = 0;
