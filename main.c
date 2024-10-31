@@ -37,6 +37,7 @@
 
 #define VECTOR_RAM      (0xE000) // 4k ram (xy board)
 #define VECTOR_RAM_SZ   (4*1024)
+#define SYMBOLS_SZ      (0x100)
 ////////////////////////////////////
 
 // Test button on CPU board asserts NMI
@@ -199,6 +200,12 @@ static uint8_t rand(void) {
    return x & 0xff;
 }
 
+static uint16_t wrap(uint16_t v, uint16_t max, uint16_t min) {
+   if ( v > max ) {
+      v -= min;
+   }
+   return v;
+}
 
 static uint16_t xy_multiply( uint8_t x, uint8_t y ) {
    XY_MULTIPLICAND = x;
@@ -251,6 +258,7 @@ static uint16_t div_16(uint16_t u, uint16_t v) {
    return q;
 }
 
+#define divideBy3(x) (((x)>>2)+((x)>>4))
 
 static uint8_t divideBy10(uint8_t *value) {
     uint8_t count = 0;
@@ -637,54 +645,15 @@ typedef struct {
 #define SEGA_COLOR_CYAN    (SEGA_COLOR_GREEN|SEGA_COLOR_BLUE)
 #define SEGA_COLOR_MAGENTA (SEGA_COLOR_RED|SEGA_COLOR_BLUE)
 #define SEGA_COLOR_WHITE   (SEGA_COLOR_RED|SEGA_COLOR_GREEN|SEGA_COLOR_BLUE)
+#define SEGA_COLOR_GRAY    (0x2A|SEGA_VISIBLE)
 #define SEGA_ANGLE(deg)    ((uint16_t)(((float)(deg))*2.845))
 #define SIZE(x)            (x*10)
 #define LE(x)              LSB(x), MSB(x)
 
 
-static uint16_t spinner_vector_angle(void) {
-   PORT_370 = 0xFE; // switch io expander to spinner
-   delay(1);
-   uint8_t value = PORT_374;
-   bool dir = value & 0x01;
-   value = value >> 1;
-   PORT_370 = 0xFF; // switch io expander to buttons
-   delay(1);
+#define V_ADDR(x) (VECTOR_RAM+SYMBOLS_SZ+(x*4))
+#define S_ADDR(x) (VECTOR_RAM+(x*10))
 
-   static uint16_t angle = 0;
-   static uint16_t lastvalue = 0xffff;
-   if (lastvalue != 0xffff) {
-      if ( value > lastvalue ) {
-         lastvalue += 127; // 2^7 max angle in spinner space
-      }
-      uint8_t delta = lastvalue - value;
-      // spinner angle in degrees is about 5.6 * value
-      // vector is SEGA_ANGLE( angle ), so 2.845 * 5.6 = ~16
-//      delta <<= 4;  // x 16
-      if (dir) {
-         // only ever counts down so we have to account for direction bit
-         angle += delta;
-      } else {
-         angle -= delta;
-      }
-      angle &= 0x03FF; // 2^10 max angle in vector space
-    }
-    lastvalue = value;
-    return angle;
-}
-
-
-
-static void vector_test(void) {
-
-   // the vector table is useful to describe vectors, but since scale, position and rotation
-   // are all set in the symbol drawing list that vector table might as well be in rom
-   uint8_t *vectors = (uint8_t*)0xE400; // arbitrary location in vector ram
-   #define V_ADDR(x) ((x*4)+0xE400)
-
-   // the xy ram is not dual port. and the xy board is running asynchonously 
-   // from the cpu, so you can't read from it without collissions and corrupting graphics.
-   uint8_t *symbols = (uint8_t*)0xE000; // must be at the top of vector ram
 
    const uint8_t vector[] = {
        #define V_LINE  0
@@ -914,25 +883,65 @@ static void vector_test(void) {
      SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)),
      SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(2),   LE(SEGA_ANGLE(90)),
 
-     #define V_CUBE (V_CHOPPER+29)
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 0  adjust angle  invisible below horizon
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 1  invisible below horizon
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 2
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 3  adjust angle (45...135)
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 4
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 5
-     SEGA_COLOR_CYAN,                  SIZE(5.6), LE(SEGA_ANGLE(135)), // 6
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 7
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 8  adjust angle 
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 9
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 10 invisible above horizon
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 11 adjust angle invisible above horizon
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 12
-     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(90)),  // 13
+     #define V_CUBE0 (V_CHOPPER+29)
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 0  angle 
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 1  rear
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 2  rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 3  angle 180
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 4  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 5  front
+     SEGA_COLOR_CYAN,                  SIZE(5.6), LE(SEGA_ANGLE(135)), // 6  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 7  front
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 8  angle
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(270)), // 9  retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 10 rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 11 angle 180
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 12 retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 13 front
+     SEGA_CLEAR,                       SIZE(1),   LE(SEGA_ANGLE(45)),  // 14 angle retrace
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 15 retrace
+     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(270)), // 16 rear
 
+     #define V_CUBE1 (V_CUBE0+17)
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 0  angle 
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 1  rear
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 2  rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 3  angle 180
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 4  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 5  front
+     SEGA_COLOR_CYAN,                  SIZE(5.6), LE(SEGA_ANGLE(135)), // 6  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 7  front
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 8  angle
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(270)), // 9  retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 10 rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 11 angle 180
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 12 retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 13 front
+     SEGA_CLEAR,                       SIZE(1),   LE(SEGA_ANGLE(45)),  // 14 angle retrace
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 15 retrace
+     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(270)), // 16 rear
+
+     #define V_CUBE2 (V_CUBE1+17)
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 0  angle 
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 1  rear
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 2  rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 3  angle 180
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 4  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 5  front
+     SEGA_COLOR_CYAN,                  SIZE(5.6), LE(SEGA_ANGLE(135)), // 6  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 7  front
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 8  angle
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(270)), // 9  retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 10 rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 11 angle 180
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 12 retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 13 front
+     SEGA_CLEAR,                       SIZE(1),   LE(SEGA_ANGLE(45)),  // 14 angle retrace
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 15 retrace
+     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(270)), // 16 rear
+
+     #define V_LAST (V_CUBE2+17)
     };
-   memcpy( vectors, vector, sizeof(vector) );
-
 
    const uint8_t symbol[] = {
       // 10 bytes each entry
@@ -965,16 +974,271 @@ static void vector_test(void) {
       SEGA_VISIBLE, LE(1024), LE(MAX_Y-35), LE(V_ADDR(V_BLADE)), LE(0),     0x40,
 
       #define S_CUBE0 11
-      SEGA_VISIBLE, LE(MIN_X), LE(MIN_Y), LE(V_ADDR(V_CUBE)), LE(0),     0xf0,
+      SEGA_VISIBLE, LE(MIN_X), LE(1024-250), LE(V_ADDR(V_CUBE0)), LE(0),     0xf0,
       #define S_CUBE1 12
-      0,            LE(MIN_X), LE(1024), LE(V_ADDR(V_CUBE)), LE(0),     0x80,
+      SEGA_VISIBLE, LE(MAX_X-70), LE(1024), LE(V_ADDR(V_CUBE1)), LE(0),     0xf0,
       #define S_CUBE2 13
-      0,            LE(MAX_X), LE(MIN_Y), LE(V_ADDR(V_CUBE)), LE(0),     0x80,
-      #define S_CUBE3 14
-      0|SEGA_LAST,  LE(MAX_X), LE(1024), LE(V_ADDR(V_CUBE)), LE(0),     0x80,
+      SEGA_VISIBLE, LE(MIN_X), LE(1024+250), LE(V_ADDR(V_CUBE2)), LE(0),    0xf0,
+      #define S_LAST  14
+      SEGA_LAST
    };
-   memcpy( symbols, symbol, sizeof(symbol) );
+   
 
+
+// the xy ram is not dual port. and the xy board is running asynchonously 
+// from the cpu, so you can't read from it without collissions and corrupting graphics.
+uint8_t *symbols = (uint8_t*)(VECTOR_RAM); // must be at the top of vector ram   
+
+// the vector table is useful to describe vectors, but since scale, position and rotation
+// are all set in the symbol drawing list that vector table might as well be in rom
+uint8_t *vectors = (uint8_t*)(VECTOR_RAM+SYMBOLS_SZ); // arbitrary location in vector ram
+
+
+static void vector_init(void) {
+   #if S_ADDR(S_LAST) > (VECTOR_RAM+SYMBOLS_SZ)
+       #error 'symbols do not fit in memory'
+   #endif
+   #if V_ADDR(V_LAST) > (VECTOR_RAM+VECTOR_RAM_SZ)
+       #error 'vectors do not fit in memory'
+   #endif
+   memcpy( symbols, symbol, sizeof(symbol) );
+   memcpy( vectors, vector, sizeof(vector) );
+}
+
+
+static uint16_t spinner_vector_angle(void) {
+   PORT_370 = 0xFE; // switch io expander to spinner
+   delay(1);
+   uint8_t value = PORT_374;
+   bool dir = value & 0x01;
+   value = value >> 1;
+   PORT_370 = 0xFF; // switch io expander to buttons
+   delay(1);
+
+   static uint16_t angle = 0;
+   static uint16_t lastvalue = 0xffff;
+   if (lastvalue != 0xffff) {
+      if ( value > lastvalue ) {
+         lastvalue += 127; // 2^7 max angle in spinner space
+      }
+      uint8_t delta = lastvalue - value;
+      // spinner angle in degrees is about 5.6 * value
+      // vector is SEGA_ANGLE( angle ), so 2.845 * 5.6 = ~16
+// seems to work great on real hardeware, but not in mame
+//      delta <<= 4;  // x 16
+      if (dir) {
+         // only ever counts down so we have to account for direction bit
+         angle += delta;
+      } else {
+         angle -= delta;
+      }
+      angle &= 0x03FF; // 2^10 max angle in vector space
+    }
+    lastvalue = value;
+    return angle;
+}
+
+/*
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 0  angle 
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 1  rear
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 2  rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 3  angle 180
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 4  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 5  front
+     SEGA_COLOR_CYAN,                  SIZE(5.6), LE(SEGA_ANGLE(135)), // 6  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 7  front
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 8  angle
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(270)), // 9  retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 10 rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 11 angle 180
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 12 retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 13 front
+     SEGA_CLEAR,                       SIZE(1),   LE(SEGA_ANGLE(45)),  // 14 angle retrace
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 15 retrace
+     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(270)), // 16 rear
+*/
+
+static uint16_t flipCubeX( uint16_t x ) {
+   if ( x < 1024 ) {
+      return MAX_X-70;
+   }
+   return MIN_X;
+}
+
+static void colorCube( uint16_t vid, uint8_t quad ) {
+   switch ( quad ) {
+      case 1: // top right
+         vectors[ VFIELD_COLOR(vid+0) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+8) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+10) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+16) ] = SEGA_COLOR_CYAN|SEGA_LAST;
+         break;
+      case 2: // top left
+         vectors[ VFIELD_COLOR(vid+0) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+8) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+10) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+16) ] = SEGA_COLOR_CYAN|SEGA_LAST;
+         break;
+      case 3: // bottom left
+         vectors[ VFIELD_COLOR(vid+0) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+8) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+10) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+16) ] = SEGA_COLOR_GRAY|SEGA_LAST;
+         break;
+      case 4: // bottom right
+         vectors[ VFIELD_COLOR(vid+0) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+8) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+10) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+16) ] = SEGA_COLOR_GRAY|SEGA_LAST;
+         break;
+   }
+}
+
+
+static uint8_t quadrant( uint16_t x, uint16_t y ) {
+   if ( x < 1024 ) {
+      if ( y < 1024 ) {
+         return 3; // bottom left
+      } else {
+         return 2; // top left
+      }
+   } else {
+      if ( y < 1024 ) {
+         return 4; // bottom right
+      } else {
+         return 1; // top right
+      }
+   }
+}
+
+static void moveCube( uint8_t sid, uint16_t vid, int8_t movex, int8_t movey ) {
+
+   uint16_t x = symbols[ SFIELD_X_L(sid) ] | (symbols[ SFIELD_X_H(sid) ] << 8);
+   uint16_t y = symbols[ SFIELD_Y_L(sid) ] | (symbols[ SFIELD_Y_H(sid) ] << 8);
+
+   uint8_t quad_a = quadrant( x, y );
+
+   x += movex;
+   if ( x > MAX_X ) {
+      x = MIN_X;
+   } else if ( x < MIN_X ) {
+      x = MAX_X;
+   }
+
+   y += movey;
+   if ( y > MAX_Y ) {
+      y = MIN_Y;
+      x = flipCubeX( x );
+   } else if ( y < MIN_Y ) {
+      y = MAX_Y;
+      x = flipCubeX( x );
+   }
+
+   symbols[ SFIELD_X_L(sid) ] = LSB(x);
+   symbols[ SFIELD_X_H(sid) ] = MSB(x);
+   symbols[ SFIELD_Y_L(sid) ] = LSB(y);
+   symbols[ SFIELD_Y_H(sid) ] = MSB(y);
+
+
+   uint8_t quad_b = quadrant( x, y );
+   if ( quad_a != quad_b ) {
+      colorCube( vid, quad_b );
+   }
+
+   static uint8_t ct = 0;
+   ct++;
+   if ( ct > 3 ) {
+      // only need to update angle every 3 moves
+      ct = 0;
+
+      uint16_t a;
+      if ( x < 1024 ) {
+         a = divideBy3(y - MIN_Y) + SEGA_ANGLE(45);
+      } else {
+         a = SEGA_ANGLE(315) - divideBy3(y - MIN_Y);
+      }
+
+      vectors[ VFIELD_ANGLE_L(vid+0) ] = LSB(a);
+      vectors[ VFIELD_ANGLE_H(vid+0) ] = MSB(a);
+      vectors[ VFIELD_ANGLE_L(vid+3) ] = LSB(a+SEGA_ANGLE(180));
+      vectors[ VFIELD_ANGLE_H(vid+3) ] = MSB(a+SEGA_ANGLE(180));
+      vectors[ VFIELD_ANGLE_L(vid+8) ] = LSB(a);
+      vectors[ VFIELD_ANGLE_H(vid+8) ] = MSB(a);
+      vectors[ VFIELD_ANGLE_L(vid+11) ] = LSB(a+SEGA_ANGLE(180));
+      vectors[ VFIELD_ANGLE_H(vid+11) ] = MSB(a+SEGA_ANGLE(180));
+      vectors[ VFIELD_ANGLE_L(vid+14) ] = LSB(a);
+      vectors[ VFIELD_ANGLE_H(vid+14) ] = MSB(a);
+   }
+
+}
+
+static void drawChopper(void) {
+   static uint16_t flight_x = 1024;
+   static uint16_t flight_y = 1024;
+   if (flight_x<MIN_X) {
+      flight_x=MAX_X;
+      flight_y = 1024-128 + (rand() << 1);
+      symbols[ SFIELD_Y_L(S_CHOPPER) ] = LSB(flight_y);
+      symbols[ SFIELD_Y_H(S_CHOPPER) ] = MSB(flight_y);
+      symbols[ SFIELD_Y_L(S_BLADE) ] = LSB(flight_y);
+      symbols[ SFIELD_Y_H(S_BLADE) ] = MSB(flight_y);
+   }
+   flight_x -= 4;
+   symbols[ SFIELD_X_L(S_CHOPPER) ] = LSB(flight_x);
+   symbols[ SFIELD_X_H(S_CHOPPER) ] = MSB(flight_x);
+   symbols[ SFIELD_X_L(S_BLADE) ] = LSB(flight_x);
+   symbols[ SFIELD_X_H(S_BLADE) ] = MSB(flight_x);
+
+   static uint16_t blade_angle = 0;
+   blade_angle = (blade_angle - 10) & 0x03FF;
+   symbols[ SFIELD_ANGLE_L(S_BLADE) ] = LSB( blade_angle ); 
+   symbols[ SFIELD_ANGLE_H(S_BLADE) ] = MSB( blade_angle );
+}
+
+static void drawTank(uint16_t angle) {
+   uint8_t syms[] = {S_BARREL*10,S_FLAME*10,S_TURRET*10};
+   for (uint8_t i=0; i<sizeof(syms)/sizeof(syms[0]); i++) {
+      uint8_t ix = syms[i];
+      symbols[ix+7] = LSB(angle); 
+      symbols[ix+8] = MSB(angle);
+   }
+}
+
+static uint8_t drawMissle(uint8_t dist) {
+   if ( symbols[ SFIELD_COLOR(S_MISSLE) ] == SEGA_VISIBLE ) {
+      if (dist < 250 ) {
+         dist += 5;
+         vectors[ VFIELD_SIZE(V_MISSILE+0) ] = dist;
+         vectors[ VFIELD_SIZE(V_MISSILE+1) ] = dist;
+         vectors[ VFIELD_SIZE(V_MISSILE+2) ] = dist;
+         vectors[ VFIELD_SIZE(V_MISSILE+3) ] = dist;
+      } else {
+         symbols[ SFIELD_COLOR(S_MISSLE)] = 0;
+      }
+   }
+   return dist;
+}
+
+
+static void vector_test(void) {
+
+   vector_init();
 
    for (;;) {
 
@@ -1019,46 +1283,11 @@ static void vector_test(void) {
                ct = 0;
             }
 
-            if ( symbols[ SFIELD_COLOR(S_MISSLE) ] == SEGA_VISIBLE ) {
-               if (missle < 250 ) {
-                  missle += 5;
-                  vectors[ VFIELD_SIZE(V_MISSILE+0) ] = missle;
-                  vectors[ VFIELD_SIZE(V_MISSILE+1) ] = missle;
-                  vectors[ VFIELD_SIZE(V_MISSILE+2) ] = missle;
-                  vectors[ VFIELD_SIZE(V_MISSILE+3) ] = missle;
-               } else {
-                  symbols[ SFIELD_COLOR(S_MISSLE)] = 0;
-               }
-            }
+            drawTank( vec_angle );
 
-            static uint16_t flight_x = 1024;
-            static uint16_t flight_y = 1024;
-            if (flight_x<MIN_X) {
-               flight_x=MAX_X;
-               flight_y = 1024-128 + (rand() << 1);
-               symbols[ SFIELD_Y_L(S_CHOPPER) ] = LSB(flight_y);
-               symbols[ SFIELD_Y_H(S_CHOPPER) ] = MSB(flight_y);
-               symbols[ SFIELD_Y_L(S_BLADE) ] = LSB(flight_y);
-               symbols[ SFIELD_Y_H(S_BLADE) ] = MSB(flight_y);
-            }
-            flight_x -= 4;
-            symbols[ SFIELD_X_L(S_CHOPPER) ] = LSB(flight_x);
-            symbols[ SFIELD_X_H(S_CHOPPER) ] = MSB(flight_x);
-            symbols[ SFIELD_X_L(S_BLADE) ] = LSB(flight_x);
-            symbols[ SFIELD_X_H(S_BLADE) ] = MSB(flight_x);
+            missle = drawMissle( missle );
 
-            static uint16_t blade_angle = 0;
-            blade_angle = (blade_angle - 10) & 0x03FF;
-            symbols[ SFIELD_ANGLE_L(S_BLADE) ] = LSB( blade_angle ); 
-            symbols[ SFIELD_ANGLE_H(S_BLADE) ] = MSB( blade_angle );
-
-            uint8_t syms[] = {S_BARREL*10,S_FLAME*10,S_TURRET*10};
-            for (uint8_t i=0; i<sizeof(syms)/sizeof(syms[0]); i++) {
-               uint8_t ix = syms[i];
-               symbols[ix+7] = LSB(vec_angle); 
-               symbols[ix+8] = MSB(vec_angle);
-            }
-
+            drawChopper();
 
             if ( PORT_374 == BUTTON_THRUST ) {
 
@@ -1071,48 +1300,9 @@ static void vector_test(void) {
                   l = 10;
                }
 
-               static uint16_t ground_y = MIN_Y;
-               static uint16_t ground_a = SEGA_ANGLE(45);
-               static uint8_t ground_c = 0;
-               ground_y++;
-               ground_c++;
-               if ( ground_c >= 6 ) {
-                  ground_c = 0;
-                  ground_a += SEGA_ANGLE(1);
-               }
-               if ( ground_y >= MAX_Y ) {
-                  ground_y = MIN_Y;
-                  ground_a = SEGA_ANGLE(45); // should be at 135 by now
-               }
-               symbols[ SFIELD_Y_L(S_CUBE0) ] = LSB(ground_y);
-               symbols[ SFIELD_Y_H(S_CUBE0) ] = MSB(ground_y);
-
-               // adjust cube angle depending on y position.
-               // y = 575 then a = 45, y = 1474 then a = 135
-               // SEGA_ANGLE( (y - 125) / 10 );
-               vectors[ VFIELD_ANGLE_L(V_CUBE+0) ] = LSB(ground_a);
-               vectors[ VFIELD_ANGLE_H(V_CUBE+0) ] = MSB(ground_a);
-               vectors[ VFIELD_ANGLE_L(V_CUBE+3) ] = LSB(ground_a+SEGA_ANGLE(180));
-               vectors[ VFIELD_ANGLE_H(V_CUBE+3) ] = MSB(ground_a+SEGA_ANGLE(180));
-               vectors[ VFIELD_ANGLE_L(V_CUBE+8) ] = LSB(ground_a);
-               vectors[ VFIELD_ANGLE_H(V_CUBE+8) ] = MSB(ground_a);
-               vectors[ VFIELD_ANGLE_L(V_CUBE+11) ] = LSB(ground_a+SEGA_ANGLE(180));
-               vectors[ VFIELD_ANGLE_H(V_CUBE+11) ] = MSB(ground_a+SEGA_ANGLE(180));
-
-               if ( ground_y > 1024 ) {
-                  // vectors 1,2 invisible below horizon
-                  vectors[ VFIELD_COLOR(V_CUBE+0) ] = SEGA_CLEAR;
-                  vectors[ VFIELD_COLOR(V_CUBE+1) ] = SEGA_CLEAR;
-                  vectors[ VFIELD_COLOR(V_CUBE+10) ] = SEGA_COLOR_CYAN;
-                  vectors[ VFIELD_COLOR(V_CUBE+11) ] = SEGA_COLOR_CYAN;
-               } else {
-                  // vectors 10,11 invisible below horizon
-                  vectors[ VFIELD_COLOR(V_CUBE+0) ] = SEGA_COLOR_CYAN;
-                  vectors[ VFIELD_COLOR(V_CUBE+1) ] = SEGA_COLOR_CYAN;
-                  vectors[ VFIELD_COLOR(V_CUBE+10) ] = SEGA_CLEAR;
-                  vectors[ VFIELD_COLOR(V_CUBE+11) ] = SEGA_CLEAR;
-               }
-
+               moveCube( S_CUBE0, V_CUBE0, 0, -1 );
+               moveCube( S_CUBE1, V_CUBE1, 0, -1 );
+               moveCube( S_CUBE2, V_CUBE2, 0, -1 );
             }
    }
 }
