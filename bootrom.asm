@@ -31,5 +31,6 @@
 	RETI
 
 	ds	66h-$   ; NMI
-	RETI
+	RETN
+	
 
