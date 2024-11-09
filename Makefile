@@ -20,8 +20,9 @@ clean:
 
 bigrom: prereq
 	@echo "building big 32kb rom"
-	zcc +z80 -vn -O2 -startup=1 -clib=new main.c -o $@ -create-app -DEMBEDDED_USB -Cz"--rombase=0x0000 --romsize=32768"
+	zcc +z80 --list -vn -SO3 -compiler=sdcc -startup=1 main.c -o $@ -create-app -DEMBEDDED_USB -Cz"--rombase=0x0000 --romsize=32768"
 	@mv $@* build/ 2>/dev/null || true
+	@mv *.lis build/ 2>/dev/null || true
 	@printf 'code size: ' && stat -f '%z' build/$@_CODE.bin 
 	truncate -s 26K build/$@.rom
 	cat usbrom.bin >> build/$@.rom
