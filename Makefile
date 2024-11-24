@@ -5,7 +5,7 @@
 
 
 
-all: bigrom bootrom
+all: mamerom bootrom
 
 prereq:
 	@mkdir -p build
@@ -18,8 +18,8 @@ clean:
 # development is made easier by loading bootrom into 1873.cpu-u25
 # then romulator can be quickly loaded to a single large rom on the ROM board
 
-bigrom: prereq
-	@echo "building big 32kb rom"
+mamerom: prereq
+	@echo "building 32kb rom at 0x0000"
 	zcc +z80 --list -vn -SO3 -compiler=sdcc -startup=1 main.c -o $@ -create-app -DEMBEDDED_USB -Cz"--rombase=0x0000 --romsize=32768"
 	@mv $@* build/ 2>/dev/null || true
 	@mv *.lis build/ 2>/dev/null || true
@@ -28,10 +28,12 @@ bigrom: prereq
 	cat usbrom.bin >> build/$@.rom
 
 gamerom: prereq
-	@echo "building development rom at 0x800 for use with sega-boot-rom in cpu rom socket"
-	zcc +z80 -vn -O2 -startup=1 -clib=new main.c -o $@ -create-app -DEMBEDDED_USB -DENABLE_BOOTROM -Cz"--rombase=0x0800 --romsize=30720"
+	@echo "building 32k rom at 0x800 for use with sega-boot-rom in cpu rom socket"
+	zcc +z80 --list -vn -SO3 -compiler=sdcc -startup=1 main.c -o $@ -create-app -DEMBEDDED_USB -DENABLE_BOOTROM -Cz"--rombase=0x0800 --romsize=24576"
 	@mv $@* build/ 2>/dev/null || true
-	@printf 'code size: ' && stat -f '%z' build/$@_CODE.bin 
+	@mv *.lis build/ 2>/dev/null || true
+	@printf 'code size: ' && stat -f '%z' build/$@_CODE.bin
+	@rm -f build/$@.bin
 	truncate -s 2K build/$@.bin
 	cat build/$@.rom >> build/$@.bin
 	truncate -s 26K build/$@.bin
