@@ -49,8 +49,15 @@
 //#pragma output CRT_MODEL = 2 // data section zx7 compressed in ROM, decompressed into RAM on program start
 
 #ifdef ENABLE_BOOTROM
+/*
+   Simply setting CRT_ORG_VECTOR_TABLE will not work, since it's  ignored when CRT_ORG_CODE is non zero.
+   Workaround is to patch z88dk/libsrc/_DEVELOPMENT/target/z80/startup/z80_crt_0.asm.m4 as follows:
+   ;IF (ASMPC = 0) && (__crt_org_code = 0)
+     include "../crt_page_zero_z80.inc"
+   ;ENDIF
+*/
    #pragma output CRT_ORG_CODE = 0x0800 // when using boot rom
-//   #pragma output CRT_ORG_VECTOR_TABLE = 0x0000
+//   #pragma output CRT_ORG_VECTOR_TABLE = -0x0800
 #else
    #pragma output CRT_ORG_CODE = 0x0000
 #endif
@@ -124,20 +131,6 @@ __sfr __at 0x38 SPEECH_COMMAND;
 __sfr __at 0x3b SPEECH_CONTROL;
 __sfr __at 0x39 VOTRAX_COMMAND;
 __sfr __at 0x3f SOUND_COMMAND;
-
-/*
-   ds 0h-$  ; RESET VECTOR
-   ds 8h-$  ; SWRST 1
-   ds 10h-$ ; SWRST 2
-   ds 18h-$ ; SWRST 3
-   ds 20h-$ ; SWRST 4
-   ds 28h-$ ; SWRST 5
-   ds 30h-$ ; SWRST 6
-   ds 38h-$ ; IM 1
-   ds 66h-$ ; NMI
-*/
-
-
 
 
 #define SEGA_ANGLE(deg)    ((uint16_t)(((float)(deg))*2.845))

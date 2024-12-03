@@ -27,10 +27,12 @@
 ;	JP  0830h
 
 	ds	38h-$   ; IM 1
-	EI
-	RETI
+	JP  0838h
+;	EI
+;	RETI
 
 	ds	66h-$   ; NMI
-	RETN
+	JP  0866h
+;	RETN
 	
 
