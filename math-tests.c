@@ -323,6 +323,22 @@ static void vectorPosition( uint16_t sega_angle, uint16_t length, int16_t *x, in
   }
 }
 
+const uint8_t atan_table[] = {
+   0,0,0,0,0,0,0,0,
+   255,128,75,52,40,32,27,23,
+   255,180,128,96,75,62,52,45,
+   255,203,160,128,105,88,75,66,
+   255,216,180,151,128,110,96,84,
+   255,223,194,168,146,128,113,101,
+   255,229,203,180,160,142,128,115,
+   255,232,210,190,171,155,140,128,
+};
+
+
+uint8_t _atan(uint8_t x, uint8_t y) {
+   return atan_table[ (x<<3) + y ];
+}
+
 
 int main(void) {
     
@@ -337,8 +353,7 @@ int main(void) {
         //printf("%d, //%0.2f %0.2f %0.0f\n", (int)roundf(sfp), s, a, sa );
         printf("%d,", (int)roundf(sfp));
     }
-    printf("};\n");
-
+    printf("\n};\n");
     
     for (float sa=0; sa<SEGA_ANGLE_F(360); sa+=6) {
         float a = sa/SEGA_ANGLE_F(1);
@@ -356,6 +371,37 @@ int main(void) {
         vectorPosition( sa, length, &x1, &y1 );
         printf("%d %d\n", x1, y1 );
     }
+
+    printf("const uint8_t atan_table[] = {\n");
+    for (int x=0; x<8; x++) {
+       printf("   ");
+       // would it make more sense to use a ratio of x/y as the index?
+       // might need to x100 or /100 depending on reflection of x <y or y>x ?
+       for (int y=0; y<8; y++) {
+           float in = (float)x / (float)y;
+           float a = atan( in );
+           float d = a / 0.0175;
+           float sa = SEGA_ANGLE_F(d);
+           printf("%d, //%d,%d %0.2f %0.2f\n", (int)roundf(sa), x, y, in, d);
+           if ( x + y == 0 ) {
+              sa = 0;
+           }
+           //printf("%d,", (int)roundf(sa));
+       }
+       printf("\n");
+    }
+    printf("};\n");
+
+    for (int x=0; x<8; x++) {
+       for (int y=0; y<8; y++) {
+           float a = atan( (float)x / (float)y );
+           float d = a / 0.0175;
+           float sa = SEGA_ANGLE_F(d);
+           printf("%d,%d %0.0f %d\n",x,y,sa, _atan(x,y) );
+        }
+     }
+
+
     return 0;
 }
 
