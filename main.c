@@ -192,6 +192,8 @@ void z80_rst_38h (void) __critical __interrupt(0) {
       if (ix>=sizeof(track)) ix = 0;
    }
    div++;
+   volatile uint8_t intcl = PORT_370; // force INTCL
+   // __asm__("ei");
 }
 
 
@@ -1726,12 +1728,13 @@ void main(void) {
    vector_init();
 
    __asm__("ei");
+   __asm__("halt");
 
 #ifdef ENABLE_UART
    send_uart_data("boot\r\n",6);
 #endif
 
-   //say( START );
+   say( START );
 
    for (;;) {
       super_loop();

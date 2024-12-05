@@ -3,7 +3,7 @@
 
 # see https://github-wiki-see.page/m/z88dk/z88dk/wiki/NewLib--Platform--Embedded
 
-#/Users/jmathews/Downloads/dasmxx-master/src/dasmz80 dasmxx/sega.txt > dasmxx/gamerom.asm
+# ~/Downloads/dasmxx-master/src/dasmz80 dasmxx/sega.txt > dasmxx/gamerom.asm
 
 all: gamerom
 
@@ -24,6 +24,7 @@ gamerom: prereq bootrom
 	@mv $@* build/ 2>/dev/null || true
 	@mv *.lis build/ 2>/dev/null || true
 	@printf 'code size: ' && stat -f '%z' build/$@_CODE.bin
+	@grep -q "/crt_page_zero_z80.inc:" build/$@.lis || (echo "ERROR crt_page_zero missing. please edit z80_crt_o.asm.m4" && exit 1)
 	@rm -f build/$@.bin
 	cat build/bootrom.bin >> build/$@.bin
 	cat build/$@.rom >> build/$@.bin
@@ -55,5 +56,5 @@ PROGRAMMER = python3 ~/Downloads/EPROM_EMU_NG_2.0rc9.py
 UART = /dev/cu.usbserial-B00050RO
 
 flash:
-	 ${PROGRAMMER} -mem 27256 -spi n -auto y -start 0 build/gamerom.bin ${UART}
+	 ${PROGRAMMER} -mem 27256 -spi y -auto y -start 0 build/gamerom.bin ${UART}
 
