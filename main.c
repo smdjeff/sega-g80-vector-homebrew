@@ -963,63 +963,66 @@ typedef struct {
      SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(2),   LE(SEGA_ANGLE(90)),
 
      #define V_CUBE0 (V_CHOPPER+29)
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 0  angle 
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 1  rear
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 2  rear
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 3  angle 180
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 4  front
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 5  front
-     SEGA_COLOR_RED,                   SIZE(5.6), LE(SEGA_ANGLE(135)), // 6  front
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 7  front
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 8  angle
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(270)), // 9  retrace
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 10 rear
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 11 angle 180
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 12 retrace
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 13 front
-     SEGA_CLEAR,                       SIZE(1),   LE(SEGA_ANGLE(45)),  // 14 angle retrace
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 15 retrace
-     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(270)), // 16 rear
+     SEGA_CLEAR,                       SIZE(2.8), LE(SEGA_ANGLE(315)), // 0  beam wait
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 1  angle 
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 2  rear
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 3  rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 4  angle 180
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 5  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 6  front
+     SEGA_COLOR_RED,                   SIZE(5.6), LE(SEGA_ANGLE(135)), // 7  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 8  front
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 9  angle
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(270)), // 10  retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 11 rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 12 angle 180
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 13 retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 14 front
+     SEGA_CLEAR,                       SIZE(1),   LE(SEGA_ANGLE(45)),  // 15 angle retrace
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 16 retrace
+     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(270)), // 17 rear
 
-     #define V_CUBE1 (V_CUBE0+17)
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 0  angle 
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 1  rear
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 2  rear
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 3  angle 180
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 4  front
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 5  front
-     SEGA_COLOR_GREEN,                 SIZE(5.6), LE(SEGA_ANGLE(135)), // 6  front
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 7  front
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 8  angle
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(270)), // 9  retrace
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 10 rear
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 11 angle 180
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 12 retrace
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 13 front
-     SEGA_CLEAR,                       SIZE(1),   LE(SEGA_ANGLE(45)),  // 14 angle retrace
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 15 retrace
-     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(270)), // 16 rear
+     #define V_CUBE1 (V_CUBE0+18)
+     SEGA_CLEAR,                       SIZE(2.8), LE(SEGA_ANGLE(315)), // 0  beam wait
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 1  angle 
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 2  rear
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 3  rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 4  angle 180
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 5  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 6  front
+     SEGA_COLOR_GREEN,                 SIZE(5.6), LE(SEGA_ANGLE(135)), // 7  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 8  front
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 9  angle
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(270)), // 10  retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 11 rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 12 angle 180
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 13 retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 14 front
+     SEGA_CLEAR,                       SIZE(1),   LE(SEGA_ANGLE(45)),  // 15 angle retrace
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 16 retrace
+     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(270)), // 17 rear
 
-     #define V_CUBE2 (V_CUBE1+17)
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 0  angle 
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 1  rear
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 2  rear
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 3  angle 180
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 4  front
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 5  front
-     SEGA_COLOR_BLUE,                  SIZE(5.6), LE(SEGA_ANGLE(135)), // 6  front
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 7  front
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 8  angle
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(270)), // 9  retrace
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 10 rear
-     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 11 angle 180
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 12 retrace
-     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 13 front
-     SEGA_CLEAR,                       SIZE(1),   LE(SEGA_ANGLE(45)),  // 14 angle retrace
-     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 15 retrace
-     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(270)), // 16 rear
+     #define V_CUBE2 (V_CUBE1+18)
+     SEGA_CLEAR,                       SIZE(2.8), LE(SEGA_ANGLE(315)), // 0  beam wait
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 1  angle 
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 2  rear
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 3  rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 4  angle 180
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(270)), // 5  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 6  front
+     SEGA_COLOR_BLUE,                  SIZE(5.6), LE(SEGA_ANGLE(135)), // 7  front
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(0)),   // 8  front
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(45)),  // 9  angle
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(270)), // 10  retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(180)), // 11 rear
+     SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(225)), // 12 angle 180
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(0)),   // 13 retrace
+     SEGA_COLOR_CYAN,                  SIZE(4),   LE(SEGA_ANGLE(90)),  // 14 front
+     SEGA_CLEAR,                       SIZE(1),   LE(SEGA_ANGLE(45)),  // 15 angle retrace
+     SEGA_CLEAR,                       SIZE(4),   LE(SEGA_ANGLE(180)), // 16 retrace
+     SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(4),   LE(SEGA_ANGLE(270)), // 17 rear
 
-     #define V_STREET0 (V_CUBE2+17)
+     #define V_STREET0 (V_CUBE2+18)
      SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 0
      SEGA_COLOR_WHITE,                 0,         LE(SEGA_ANGLE(180)),  // 1
      SEGA_COLOR_WHITE,                 0,         LE(SEGA_ANGLE(180)),  // 2
@@ -1210,44 +1213,44 @@ static uint16_t flipCubeX( uint16_t x ) {
 static void colorCube( uint16_t vid, uint8_t quad ) {
    switch ( quad ) {
       case 1: // top right
-         vectors[ VFIELD_COLOR(vid+0) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_GRAY;
-         vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_GRAY;
-         vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+8) ] = SEGA_COLOR_GRAY;
-         vectors[ VFIELD_COLOR(vid+10) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+16) ] = SEGA_COLOR_CYAN|SEGA_LAST;
-         break;
-      case 2: // top left
-         vectors[ VFIELD_COLOR(vid+0) ] = SEGA_COLOR_GRAY;
-         vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_GRAY;
-         vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+8) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+10) ] = SEGA_COLOR_GRAY;
-         vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+16) ] = SEGA_COLOR_CYAN|SEGA_LAST;
-         break;
-      case 3: // bottom left
-         vectors[ VFIELD_COLOR(vid+0) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+8) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+10) ] = SEGA_COLOR_GRAY;
-         vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_GRAY;
-         vectors[ VFIELD_COLOR(vid+16) ] = SEGA_COLOR_GRAY|SEGA_LAST;
-         break;
-      case 4: // bottom right
-         vectors[ VFIELD_COLOR(vid+0) ] = SEGA_COLOR_CYAN;
          vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_CYAN;
          vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_GRAY;
          vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_GRAY;
-         vectors[ VFIELD_COLOR(vid+8) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+10) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+4) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+9) ] = SEGA_COLOR_GRAY;
          vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_CYAN;
-         vectors[ VFIELD_COLOR(vid+16) ] = SEGA_COLOR_GRAY|SEGA_LAST;
+         vectors[ VFIELD_COLOR(vid+12) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+17) ] = SEGA_COLOR_CYAN|SEGA_LAST;
+         break;
+      case 2: // top left
+         vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+4) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+9) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+12) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+17) ] = SEGA_COLOR_CYAN|SEGA_LAST;
+         break;
+      case 3: // bottom left
+         vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+4) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+9) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+12) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+17) ] = SEGA_COLOR_GRAY|SEGA_LAST;
+         break;
+      case 4: // bottom right
+         vectors[ VFIELD_COLOR(vid+1) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+2) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+3) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+4) ] = SEGA_COLOR_GRAY;
+         vectors[ VFIELD_COLOR(vid+9) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+11) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+12) ] = SEGA_COLOR_CYAN;
+         vectors[ VFIELD_COLOR(vid+17) ] = SEGA_COLOR_GRAY|SEGA_LAST;
          break;
    }
 }
@@ -1397,24 +1400,25 @@ static void moveCube( uint8_t sid, uint16_t vid, int8_t movex, int8_t movey ) {
       }
 
 #if 0
-      vectors[ VFIELD_ANGLE_L(vid+0) ] = LSB(a);
-      vectors[ VFIELD_ANGLE_H(vid+0) ] = MSB(a);
-      vectors[ VFIELD_ANGLE_L(vid+3) ] = LSB(a+SEGA_ANGLE(180));
-      vectors[ VFIELD_ANGLE_H(vid+3) ] = MSB(a+SEGA_ANGLE(180));
-      vectors[ VFIELD_ANGLE_L(vid+8) ] = LSB(a);
-      vectors[ VFIELD_ANGLE_H(vid+8) ] = MSB(a);
-      vectors[ VFIELD_ANGLE_L(vid+11) ] = LSB(a+SEGA_ANGLE(180));
-      vectors[ VFIELD_ANGLE_H(vid+11) ] = MSB(a+SEGA_ANGLE(180));
-      vectors[ VFIELD_ANGLE_L(vid+14) ] = LSB(a);
-      vectors[ VFIELD_ANGLE_H(vid+14) ] = MSB(a);
-#else      
+      vectors[ VFIELD_ANGLE_L(vid+1) ] = LSB(a);
+      vectors[ VFIELD_ANGLE_H(vid+1) ] = MSB(a);
+      vectors[ VFIELD_ANGLE_L(vid+4) ] = LSB(a+SEGA_ANGLE(180));
+      vectors[ VFIELD_ANGLE_H(vid+4) ] = MSB(a+SEGA_ANGLE(180));
+      vectors[ VFIELD_ANGLE_L(vid+9) ] = LSB(a);
+      vectors[ VFIELD_ANGLE_H(vid+9) ] = MSB(a);
+      vectors[ VFIELD_ANGLE_L(vid+12) ] = LSB(a+SEGA_ANGLE(180));
+      vectors[ VFIELD_ANGLE_H(vid+12) ] = MSB(a+SEGA_ANGLE(180));
+      vectors[ VFIELD_ANGLE_L(vid+15) ] = LSB(a);
+      vectors[ VFIELD_ANGLE_H(vid+15) ] = MSB(a);
+#else
+      // 16bit pointer math is faster
       uint16_t _a = a + SEGA_ANGLE(180);
       uint16_t *p = &vectors[ VFIELD_ANGLE_L(vid) ];
-      p[0] = a;
-      p[3 *4/2] = _a;
-      p[8 *4/2] = a;
-      p[11 *4/2] = _a;
-      p[14 *4/2] = a;
+      p[1 *4/2] = a;
+      p[4 *4/2] = _a;
+      p[9 *4/2] = a;
+      p[12 *4/2] = _a;
+      p[15 *4/2] = a;
 #endif
    }
 
@@ -1603,8 +1607,8 @@ static void super_loop(void) {
                enableSymbol( sid, x, y );
                int16_t sx, sy;
                vectorPosition( vec_angle - (1<<5) + (i<<5), 5, &sx, &sy );
-               ex[i] = sx;
-               ey[i] = sy;
+               ex[i] = sx - flight_ex; // explosion vector is combo of missle and chopper of equal mass?
+               ey[i] = sy - flight_ey;
             }
          }
 
