@@ -740,25 +740,28 @@ typedef struct {
        SEGA_COLOR_YELLOW|SEGA_LAST,  0x80, LE(SEGA_ANGLE(0)),
 
        #define V_0 (V_LINE+2)
+       SEGA_CLEAR,                   0,    LE(0), // beam delay
        SEGA_COLOR_MAGENTA,           0x80, LE(SEGA_ANGLE(90)),
        SEGA_COLOR_MAGENTA,           0xC0, LE(SEGA_ANGLE(197)),
        SEGA_COLOR_MAGENTA,           0x80, LE(SEGA_ANGLE(270)),
        SEGA_COLOR_MAGENTA|SEGA_LAST, 0xC0, LE(SEGA_ANGLE(17)),
 
-       #define V_1 (V_0+4)
+       #define V_1 (V_0+5)
+       SEGA_CLEAR,                   0,    LE(0), // beam delay
        SEGA_COLOR_MAGENTA,           0x40, LE(SEGA_ANGLE(90)),
        SEGA_COLOR_MAGENTA,           0xC0, LE(SEGA_ANGLE(197)),
        SEGA_CLEAR,                   0x40, LE(SEGA_ANGLE(270)),
        SEGA_COLOR_MAGENTA|SEGA_LAST, 0x80, LE(SEGA_ANGLE(90)),
 
-       #define V_2 (V_1+4)
+       #define V_2 (V_1+5)
+       SEGA_CLEAR,                   0,    LE(0), // beam delay
        SEGA_COLOR_MAGENTA,           0x80, LE(SEGA_ANGLE(90)),
        SEGA_COLOR_MAGENTA,           0x60, LE(SEGA_ANGLE(197)),
        SEGA_COLOR_MAGENTA,           0x80, LE(SEGA_ANGLE(270)),
        SEGA_COLOR_MAGENTA,           0x60, LE(SEGA_ANGLE(197)),
        SEGA_COLOR_MAGENTA|SEGA_LAST, 0x80, LE(SEGA_ANGLE(90)),
 
-       #define V_3 (V_2+5)
+       #define V_3 (V_2+6)
        SEGA_COLOR_MAGENTA,           0x80, LE(SEGA_ANGLE(90)),
        SEGA_COLOR_MAGENTA,           0x60, LE(SEGA_ANGLE(197)),
        SEGA_COLOR_MAGENTA,           0x80, LE(SEGA_ANGLE(270)),
@@ -1188,8 +1191,10 @@ static uint16_t spinner_vector_angle(void) {
       uint8_t delta = lastvalue - value;
       // spinner angle in degrees is about 5.6 * value
       // vector is SEGA_ANGLE( angle ), so 2.845 * 5.6 = ~16
-// seems to work great on real hardeware, but not in mame
-//      delta <<= 4;  // x 16
+      #if 1
+         // seems to work great on real hardware, but not in mame
+         delta <<= 4;  // x 16
+      #endif
       if (dir) {
          // only ever counts down so we have to account for direction bit
          angle += delta;
@@ -1653,7 +1658,7 @@ static void super_loop(void) {
       if ( buttons & BUTTON_THRUST ) {
          tank_ey = 1;
       }
-      if ( buttons & BUTTON_WARP ) {
+      if ( buttons & BUTTON_PHOTON ) {
          tank_ey = -1;
       }
       if ( tank_ey ) {
