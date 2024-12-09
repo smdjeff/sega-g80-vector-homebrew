@@ -852,7 +852,7 @@ typedef struct {
        SEGA_CLEAR,                     SIZE(3),   LE(SEGA_ANGLE(180)),
        SEGA_COLOR_GREEN2,              SIZE(4),   LE(SEGA_ANGLE(270)),
        SEGA_CLEAR,                     SIZE(8),   LE(SEGA_ANGLE(270)), 
-       SEGA_COLOR_GREEN1|SEGA_LAST,    SIZE(4),   LE(SEGA_ANGLE(270)), 
+       SEGA_COLOR_GREEN2|SEGA_LAST,    SIZE(4),   LE(SEGA_ANGLE(270)), 
 
 
      #define V_TURRET (V_TREAD+25)
@@ -1041,13 +1041,15 @@ typedef struct {
      SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 7
      SEGA_COLOR_WHITE|SEGA_LAST,       0,         LE(SEGA_ANGLE(180)),  // 8
 
+     #define HITBOX_SZ 80
      #define V_BOX (V_STREET1+9)
-     SEGA_COLOR_MAGENTA,               100,        LE(SEGA_ANGLE(0)),    // 0
-     SEGA_COLOR_MAGENTA,               100,        LE(SEGA_ANGLE(90)),   // 1
-     SEGA_COLOR_MAGENTA,               100,        LE(SEGA_ANGLE(180)),  // 2
-     SEGA_COLOR_MAGENTA|SEGA_LAST,     100,        LE(SEGA_ANGLE(270)),  // 3
+     SEGA_CLEAR,                       (HITBOX_SZ/1.4),  LE(SEGA_ANGLE(225)),  // 0
+     SEGA_COLOR_MAGENTA,               HITBOX_SZ,        LE(SEGA_ANGLE(0)),    // 1
+     SEGA_COLOR_MAGENTA,               HITBOX_SZ,        LE(SEGA_ANGLE(90)),   // 2
+     SEGA_COLOR_MAGENTA,               HITBOX_SZ,        LE(SEGA_ANGLE(180)),  // 3
+     SEGA_COLOR_MAGENTA|SEGA_LAST,     HITBOX_SZ,        LE(SEGA_ANGLE(270)),  // 4
 
-     #define V_EXPLODE0 (V_BOX+4)
+     #define V_EXPLODE0 (V_BOX+5)
      SEGA_CLEAR,                       SIZE(3.1), LE(SEGA_ANGLE(248)),   // 0
      SEGA_COLOR_RED,                   SIZE(3),   LE(SEGA_ANGLE(293)),   // 1
      SEGA_COLOR_RED,                   SIZE(3),   LE(SEGA_ANGLE(68)),    // 2
@@ -1101,7 +1103,7 @@ typedef struct {
       0,            LE(1024), LE(1024), LE(V_ADDR(V_MISSILE)), LE(SEGA_ANGLE(0)),   0x40,
 
       #define S_BOX 9
-      0,            LE(1024), LE(1024), LE(V_ADDR(V_BOX)), LE(SEGA_ANGLE(0)),   0x40,
+      0,            LE(1024), LE(1024), LE(V_ADDR(V_BOX)), LE(SEGA_ANGLE(0)),   0x80,
 
       #define S_CHOPPER 10
       0, LE(1024), LE(MAX_Y-35), LE(V_ADDR(V_CHOPPER)), LE(0),     0x40,
@@ -1286,6 +1288,7 @@ static bool moveSymbol( uint8_t sid, int8_t x0, int8_t y0 ) {
    symbols[ SFIELD_Y_H(sid) ] = MSB(y);
    return false;
 #else
+   // 16bit pointer math is faster
    uint16_t *p = &symbols[ SFIELD_X_L(sid) ];
    p[0] += x0;
    p[1] += y0;
@@ -1312,7 +1315,8 @@ static inline void rotateSymbol( uint8_t sid, int8_t sega_angle ) {
    a += deg;
    symbols[ SFIELD_ANGLE_L(sid) ] = LSB(a);
    symbols[ SFIELD_ANGLE_H(sid) ] = MSB(a);
-#else   
+#else
+   // 16bit pointer math is faster
    uint16_t *p = &symbols[ SFIELD_ANGLE_L(sid) ];
    *p += sega_angle;
 #endif   
@@ -1577,10 +1581,10 @@ static void super_loop(void) {
 
       int16_t x,y = 0;
       if ( symbols[ SFIELD_VISIBLE(S_MISSLE) ] && drawMissle( &missle, &x, &y ) ) {
-         uint16_t x0 = x-25;
-         uint16_t x1 = x+25;
-         uint16_t y0 = y-25;
-         uint16_t y1 = y+25;
+         uint16_t x0 = x-(HITBOX_SZ/2);
+         uint16_t x1 = x+(HITBOX_SZ/2);
+         uint16_t y0 = y-(HITBOX_SZ/2);
+         uint16_t y1 = y+(HITBOX_SZ/2);
          static uint16_t *chopper_xy = &symbols[ SFIELD_X_L(S_CHOPPER) ];
          if ( chopper_xy[0] > x0 && chopper_xy[0] < x1 && chopper_xy[1] > y0 && chopper_xy[1] < y1 ) {
 
@@ -1603,7 +1607,7 @@ static void super_loop(void) {
             }
          }
 
-         // enableSymbol( S_BOX, x-25, y-25 );
+         enableSymbol( S_BOX, x, y );
       }
 
       if ( symbols[ SFIELD_VISIBLE(S_EXPLODE0) ] == SEGA_VISIBLE ) {
@@ -1676,19 +1680,6 @@ static void super_loop(void) {
          p[2*4] = MIN( l0, 255 );
 }
 
-     // SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 0
-     // SEGA_COLOR_WHITE,                 0,         LE(SEGA_ANGLE(180)),  // 1
-     // SEGA_COLOR_WHITE,                 0,         LE(SEGA_ANGLE(180)),  // 2
-     // SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(270)),  // 3
-     // SEGA_CLEAR,                       255,       LE(SEGA_ANGLE(180)),  // 4
-     // SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(90)),   // 5
-     // SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 6
-     // SEGA_COLOR_WHITE,                 0,         LE(SEGA_ANGLE(180)),  // 7
-     // SEGA_COLOR_WHITE|SEGA_LAST,       0,         LE(SEGA_ANGLE(180)),  // 8
-
-         // moveSymbol( S_STREET0, 0, -1 );
-         // moveSymbol( S_STREET1, 0, -1 );
-         // moveSymbol( S_STREET2, 0, -1 );
 
          moveSymbol( S_CHOPPER, 0, -1 );
          moveSymbol( S_BLADE, 0, -1 );

@@ -1,9 +1,9 @@
 #export PATH=${PATH}:/Users/jeff/Desktop/z88dk/bin
 #export ZCCCFG=/Users/jeff/Desktop/z88dk/lib/config
-
 # see https://github-wiki-see.page/m/z88dk/z88dk/wiki/NewLib--Platform--Embedded
 
 # ~/Downloads/dasmxx-master/src/dasmz80 dasmxx/sega.txt > dasmxx/gamerom.asm
+# minipro -p M2716@DIP24 -w /Users/jeff/Downloads/bootrom.bin  --vpp=25
 
 all: gamerom
 
