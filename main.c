@@ -1549,10 +1549,11 @@ static void super_loop(void) {
       uint16_t vec_angle = spinner_vector_angle();
       static uint8_t missle = 0;
 
+      uint8_t buttons = PORT_374;
+
       static uint8_t ct=0;
       if ( ct == 0 && symbols[ SFIELD_VISIBLE(S_MISSLE)] == 0 ) {
-         uint8_t button = PORT_374;
-         if ( button == BUTTON_FIRE ) {
+         if ( buttons & BUTTON_FIRE ) {
             ct = 30;
             SOUND_COMMAND = TANK_FIRE;
             symbols[ SFIELD_VISIBLE(S_FLAME) ] = SEGA_VISIBLE;
@@ -1643,46 +1644,53 @@ static void super_loop(void) {
          }
       }
 
-      if ( PORT_374 == BUTTON_THRUST ) {
+
+      int8_t tank_ey = 0;
+      if ( buttons & BUTTON_THRUST ) {
+         tank_ey = 1;
+      }
+      if ( buttons & BUTTON_WARP ) {
+         tank_ey = -1;
+      }
+      if ( tank_ey ) {
 
          SOUND_COMMAND = TANK_MOVE;
          static uint8_t l = 10;
          vectors[ VFIELD_SIZE(V_TREAD+1) ] = l;
-         if ( l < 40 ) {
-            l++;
-         } else {
-            l = 10;
-         }
+         l += tank_ey;
+         if ( l >40 ) l = 10;
+         if ( l <10 ) l = 40;
 
-         moveCube( S_CUBE0, V_CUBE0, 0, -1 );
-         moveCube( S_CUBE1, V_CUBE1, 0, -1 );
-         moveCube( S_CUBE2, V_CUBE2, 0, -1 );
+         moveCube( S_CUBE0, V_CUBE0, 0, -tank_ey );
+         moveCube( S_CUBE1, V_CUBE1, 0, -tank_ey );
+         moveCube( S_CUBE2, V_CUBE2, 0, -tank_ey );
 
+         {
          uint8_t *p = &vectors[ VFIELD_SIZE(V_STREET0) ];
          uint16_t l0 = p[0*4] + p[1*4] + p[2*4];
-         l0 += 1;
+         l0 += tank_ey;
 
          p[0*4] = MIN( l0, 255 );
          l0 -= MIN( l0, 255 );
          p[1*4] = MIN( l0, 255 );
          l0 -= MIN( l0, 255 );
          p[2*4] = MIN( l0, 255 );
+         }
 
-{
+         {
          uint8_t *p = &vectors[ VFIELD_SIZE(V_STREET1) ];
          uint16_t l0 = p[0*4] + p[1*4] + p[2*4];
-         l0 += 1;
+         l0 += tank_ey;
 
          p[0*4] = MIN( l0, 255 );
          l0 -= MIN( l0, 255 );
          p[1*4] = MIN( l0, 255 );
          l0 -= MIN( l0, 255 );
          p[2*4] = MIN( l0, 255 );
-}
+         }
 
-
-         moveSymbol( S_CHOPPER, 0, -1 );
-         moveSymbol( S_BLADE, 0, -1 );
+         moveSymbol( S_CHOPPER, 0, -tank_ey );
+         moveSymbol( S_BLADE, 0, -tank_ey );
       }
 }
 
