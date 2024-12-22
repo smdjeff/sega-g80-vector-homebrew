@@ -146,16 +146,17 @@ __sfr __at 0x3f SOUND_COMMAND;
 #define MAX_Y (1024+400)
 #define MIN_Y (1024-400)
 
+// sounds
 #define BASE_DRUM    0x2E
 #define SNARE_DRUM   0x1E
+#define HAT_DRUM     0x0E
 #define TANK_MOVE    0x00
 #define TANK_FIRE    0x1A
 
 
 
 static uint8_t nmi_counter = 0;
-static uint8_t score = 0;
-
+static uint16_t system_tick = 0;
 
 
 // NMI int (the cpu board button was pushed)
@@ -172,24 +173,46 @@ void z80_nmi(void) __critical __interrupt {
 //    * /EDGINT signal from vector board, clocks an LS74, cleared by INTCL signal
 //        - signal comes from 15468480 crystal, divided by 3, and then by 0x1f788
 void z80_rst_38h (void) __critical __interrupt(0) {
-   score++;
+
+   system_tick++;
 
    // this is a 25ms timer
    static uint8_t div = 0;
    static uint8_t ix = 0;
-   if ( div >= 250/25 ) {
+   if ( div >= 40 ) {
       div = 0;
+
+#if 0
+#define MED_TONE 0x26
+#define LOW_TONE 0x27
+#define HI_TONE  0x28
+
+      const uint8_t track9[] = { MED_TONE, 0, MED_TONE, 0, MED_TONE, 0, HI_TONE, 0,
+                                LOW_TONE, 0, LOW_TONE, 0, LOW_TONE, 0, LOW_TONE, 0 };
+
+      const uint8_t track[] =  { BASE_DRUM,         0,           0,         0,
+                                 BASE_DRUM,         0,           0,         0,
+                                 BASE_DRUM,         0,           0,         0,
+                                 BASE_DRUM,         0,           0,         0,
+                                 BASE_DRUM,         0,           0,         0,
+                                 BASE_DRUM,         0,           0,         0,
+                                 BASE_DRUM, BASE_DRUM, BASE_DRUM, BASE_DRUM,
+                                 BASE_DRUM, BASE_DRUM, BASE_DRUM, BASE_DRUM };
+
       const uint8_t track0[] = { BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
                                  BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM, 
                                  BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
                                  BASE_DRUM, SNARE_DRUM,  SNARE_DRUM, BASE_DRUM };
-      const uint8_t track[]  = { BASE_DRUM,          0,  SNARE_DRUM,         0,
+      const uint8_t track1[] = { BASE_DRUM,          0,  SNARE_DRUM,         0,
                                  BASE_DRUM,  BASE_DRUM,  SNARE_DRUM,         0, 
                                  BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
                                          0,  BASE_DRUM,  SNARE_DRUM,         0 };
+      // SOUND_COMMAND = 0xFF;
+      // SOUND_COMMAND = 0x00;
       SOUND_COMMAND = track[ ix ];
       ix++;
       if (ix>=sizeof(track)) ix = 0;
+#endif
    }
    div++;
    volatile uint8_t intcl = PORT_370; // force INTCL
@@ -333,26 +356,18 @@ uint8_t coslut(uint16_t sega_angle, bool *negsign) {
 
 static void vectorPosition( uint16_t sega_angle, uint16_t length, int16_t *x, int16_t *y ) {
   bool sin_neg, cos_neg;
+  
   uint8_t sin_value = sinlut( sega_angle, &sin_neg );
   uint8_t cos_value = coslut( sega_angle, &cos_neg );
+
   *x = 0; *y = 0;
   do {
-    uint8_t l = MIN(length,254);
-
-#if 0
+    uint16_t l = MIN(length,254);
     *x += xy_multiply( 1 + l, sin_value ) >> 8;
     *y += xy_multiply( 1 + l, cos_value ) >> 8;
-#else
-    XY_MULTIPLICAND = 1+l;
-    XY_MULTIPLIER = sin_value;
-    (volatile uint8_t *)XY_MULTIPLIER;
-    *x += XY_MULTIPLIER;
-    XY_MULTIPLIER = cos_value;
-    (volatile uint8_t *)XY_MULTIPLIER;
-    *y += XY_MULTIPLIER;
-#endif
     length -= l;
   } while (length);
+
   if (sin_neg) {
       *x = - *x;
   }
@@ -1533,27 +1548,31 @@ static bool drawMissle(uint8_t *dist, int16_t *x, int16_t *y) {
 }
 
 static void drawScore( uint8_t score ) {
-   const uint16_t lut[] = { V_ADDR(V_0),V_ADDR(V_1),V_ADDR(V_2),V_ADDR(V_3),V_ADDR(V_4),V_ADDR(V_5),V_ADDR(V_6),V_ADDR(V_7),V_ADDR(V_8),V_ADDR(V_9) };
-   uint8_t r = score; // remainder
-   uint8_t d0 = divideBy100( &r ); 
-   uint8_t d1 = divideBy10( &r );
-   uint8_t d2 = r;
-   static uint16_t *dig0_addr = &symbols[ SFIELD_ADDR_L(S_DIG0) ];
-   static uint16_t *dig1_addr = &symbols[ SFIELD_ADDR_L(S_DIG1) ];
-   static uint16_t *dig2_addr = &symbols[ SFIELD_ADDR_L(S_DIG2) ];
-   *dig0_addr = lut[d0];
-   *dig1_addr = lut[d1];
-   *dig2_addr = lut[d2];
+   static uint8_t last_score = 0;
+   if ( score != last_score ) {
+      last_score = score;
+      const uint16_t lut[] = { V_ADDR(V_0),V_ADDR(V_1),V_ADDR(V_2),V_ADDR(V_3),V_ADDR(V_4),V_ADDR(V_5),V_ADDR(V_6),V_ADDR(V_7),V_ADDR(V_8),V_ADDR(V_9) };
+      uint8_t r = score; // remainder
+      uint8_t d0 = divideBy100( &r ); 
+      uint8_t d1 = divideBy10( &r );
+      uint8_t d2 = r;
+      static uint16_t *dig0_addr = &symbols[ SFIELD_ADDR_L(S_DIG0) ];
+      static uint16_t *dig1_addr = &symbols[ SFIELD_ADDR_L(S_DIG1) ];
+      static uint16_t *dig2_addr = &symbols[ SFIELD_ADDR_L(S_DIG2) ];
+      *dig0_addr = lut[d0];
+      *dig1_addr = lut[d1];
+      *dig2_addr = lut[d2];
+   }
 }
 
 
 static void super_loop(void) {
 
-      static uint8_t lscore;
-      uint8_t frame = score - lscore;
-      lscore = score;
+      static uint16_t last_tick = 0;
+      uint8_t frame = system_tick - last_tick;
+      last_tick = system_tick;
 
-      drawScore( score );
+      drawScore( system_tick / 40 );
 
       uint16_t vec_angle = spinner_vector_angle();
       static uint8_t missle = 0;
@@ -1707,10 +1726,9 @@ static void super_loop(void) {
 static void init(void) {
 
    SPEECH_CONTROL = 0x28;
-   // SPEECH_COMMAND = 0x00;
-
-   // SPEECH_COMMAND = 0x80;
-   // SOUND_COMMAND = 0xFF; // 8035 in reset and assert RAM LOAD latch
+   SPEECH_COMMAND = 0x00;
+   SPEECH_COMMAND = 0x80;
+   SOUND_COMMAND = 0xFF; // 8035 in reset and assert RAM LOAD latch
 
    // // blank the screen and clear vector ram
    const uint8_t s[] = { SEGA_LAST, LE(1024), LE(1024), LE(VECTOR_RAM+10), LE(0), 0x80,
