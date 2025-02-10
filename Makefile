@@ -39,13 +39,20 @@ roms: prereq gamerom
 	@cp build/bootrom.bin roms/1873.cpu-u25
 	@split -b 2048 build/gamerom.bin roms/part_
 	@i=0; \
-	for f in $(wildcard roms/part_* | sort); do \
-		base=$$((1847 + $$i)); \
-		mv "$$f" "roms/$$base.prom-u$$i"; \
-		i=$$((i + 1)); \
+	for f in $$(ls roms/part_* | sort); do \
+		mv "$$f" "roms/$$(($$i + 1847)).prom-u$$i"; \
+		i=$$(($$i + 1)); \
 	done
 	@rm roms/1847.prom-u0
 
+mame: roms
+	# effectively a patch over the existing to make mame happy
+	unzip startrek.zip -d startrek
+	rsync -vt roms/* startrek
+	zip roms.zip startrek/*
+	rm -r startrek
+	mv roms.zip build/startrek.zip
+	mame -rp ./build startrek
 
 # ROM Emulator https://github.com/Kris-Sekula/EPROM-EMU-NG/
 # python3 -m pip install serial
