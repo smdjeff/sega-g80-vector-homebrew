@@ -20,7 +20,7 @@ clean:
 
 gamerom: prereq bootrom
 	@echo "building 32k rom at 0x800 for use with sega-boot-rom in cpu rom socket"
-	zcc +z80 --list -vn -SO3 -compiler=sdcc -startup=1 main.c -o $@ -create-app -DEMBEDDED_USB -DENABLE_BOOTROM -Cz"--rombase=0x0800 --romsize=24576"
+	zcc +z80 --list -vn -SO3 -compiler=sdcc -startup=1 font.c math.c main.c -o $@ -create-app -DEMBEDDED_USB -DENABLE_BOOTROM -Cz"--rombase=0x0800 --romsize=24576"
 	@mv $@* build/ 2>/dev/null || true
 	@mv *.lis build/ 2>/dev/null || true
 	@printf 'code size: ' && stat -f '%z' build/$@_CODE.bin

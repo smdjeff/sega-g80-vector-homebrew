@@ -4,156 +4,9 @@
 // https://github.com/z88dk/z88dk/releases
 // export PATH=${PATH}:/Users/jmathews/Desktop/z88dk/bin
 // export ZCCCFG=/Users/jmathews/Desktop/z88dk/lib/config
-////////////////////////////////////
 
 ////////////////////////////////////
-
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-
-
-// #define ENABLE_UART
-
-////////////////////////////////////
-// sega g80 memory map
-#define CPU_ROM         (0x0000) // 2k power on and diagnostics rom (cpu board)
-#define CPU_ROM_SZ      (2*1024)
-
-#define ROM_BOARD       (0x0800) // 46k rom board
-#define ROM_BOARD_SZ    (46*1024)
-
-// 6k image for the usb's 8035 (allocated at end of our image)
-#define USB_ROM_SZ_A   (4*1024)
-#define USB_ROM_SZ_B   (2*1024)
-#define USB_ROM_A      (0x6800)  // from 26k-32k address
-#define USB_ROM_B      (USB_ROM_A+USB_ROM_SZ_A)
-
-#define CPU_RAM         (0xC800) // 2k ram (cpu board)
-#define CPU_RAM_SZ      (2*1024)
-
-#define USB_RAM         (0xD000) // 4k ram for the 8035 (universal serial board)
-#define USB_RAM_SZ      (4*1024)
-
-#define VECTOR_RAM      (0xE000) // 4k ram (xy board)
-#define VECTOR_RAM_SZ   (4*1024)
-#define SYMBOLS_SZ      (0x180)
-////////////////////////////////////
-
-// Test button on CPU board asserts NMI
-// 40Hz interrupt from vector timing board
-
-#pragma output CRT_ORG_DATA = 0xC800  // start of RAM
-
-#pragma output CRT_MODEL = 1 // data section copied from ROM into RAM on program start
-//#pragma output CRT_MODEL = 2 // data section zx7 compressed in ROM, decompressed into RAM on program start
-
-#ifdef ENABLE_BOOTROM
-/*
-   Simply setting CRT_ORG_VECTOR_TABLE will not work, since it's  ignored when CRT_ORG_CODE is non zero.
-   Workaround is to patch z88dk/libsrc/_DEVELOPMENT/target/z80/startup/z80_crt_0.asm.m4 as follows:
-   ;IF (ASMPC = 0) && (__crt_org_code = 0)
-     include "../crt_page_zero_z80.inc"
-   ;ENDIF
-*/
-   #pragma output CRT_ORG_CODE = 0x0800 // when using boot rom
-//   #pragma output CRT_ORG_VECTOR_TABLE = -0x0800
-#else
-   #pragma output CRT_ORG_CODE = 0x0000
-#endif
-
-
-#pragma output REGISTER_SP = 0xCFFF
-
-// used to calculate heap size (default is just unused ram)
-// #pragma output CRT_STACK_SIZE = 0xf // 128
-
-#pragma output CRT_ENABLE_RST = 0x80 // User implements rst38h (IM1). user must preserve register values and exit with "ei; reti"
-// #pragma output CRT_ENABLE_RST = 0x00 // User implements no isrs (default)
-#pragma output CRT_ENABLE_NMI = 1 // program supplies nmi isr
-#pragma output CRT_ENABLE_EIDI = 0x01 // disable interrupts di on start
-//#pragma output CRT_ENABLE_EIDI = 0x02 // enable interrupts ei on start
-#pragma output CRT_INTERRUPT_MODE = 1
-#pragma output CLIB_MALLOC_HEAP_SIZE = 0
-#pragma output CLIB_STDIO_HEAP_SIZE = 0
-
-
-__sfr __at 0xfc PORT_374;
-// |   D7    |   D6    |   D5    |   D4    |   D3    |   D2    |   D1    |   D0   |
-// +=========+=========+=========+=========+=========+=========+=========+========+
-// |  P1-30  |  P1-29  |  P1-28  |  P1-27  |  P1-26  |  P1-25  |  P1-24  |  P1-23 |
-// +---------+---------+---------+---------+---------+---------+---------+--------+
-// |RotL P2  |RotR P2  | FIRE P2 |THRUST P2|   <--- SPACE FURY (cocktail)         |
-// +---------+---------+---------+---------+---------+---------+---------+--------+
-// ELIMINATOR --->                                   |RotR Red |ThrustRed|Fire Red|
-// +---------+---------+---------+---------+---------+---------+---------+--------+
-// STAR TREK  --->     | WARP    | PHOTON  | PHASER  | IMPULSE | 2Player |1Player 
-#define BUTTON_PLAYER_1 (1<<0)
-#define BUTTON_PLAYER_2 (1<<1)
-#define BUTTON_THRUST   (1<<2)
-#define BUTTON_FIRE     (1<<3)
-#define BUTTON_PHOTON   (1<<4)
-#define BUTTON_WARP     (1<<5)
-
-__sfr __at 0xf8 PORT_370;
-   #define PORT_370_D7      0x80
-   #define PORT_370_D6      0x40
-   #define PORT_370_D5      0x20
-   #define PORT_370_D4      0x10
-   #define PORT_370_D3      0x08
-   #define PORT_370_D2      0x04
-   #define PORT_370_D1      0x02
-   #define PORT_370_D0      0x01
-   #define PORT_SEL         PORT_370_D0
-
-__sfr __at 0xf9 PORT_371;
-   #define PORT_371_D7      0x80
-   #define PORT_371_D6      0x40
-   #define PORT_371_D5      0x20
-   #define PORT_371_D4      0x10
-   #define PORT_371_D3      0x08
-   #define PORT_371_D2      0x04
-   #define PORT_371_D1      0x02
-   #define PORT_371_D0      0x01
-   #define COIN_COUNTER_A   PORT_371_D7
-   #define COIN_COUNTER_B   PORT_371_D6
-
-#define PORT_LED            PORT_370
-#define LED_1               PORT_370_D7
-#define LED_2               PORT_370_D6
-
-
-__sfr __at 0xbe XY_MULTIPLIER;
-__sfr __at 0xbd XY_MULTIPLICAND;
-__sfr __at 0xbf XY_INIT;
-
-__sfr __at 0x38 SPEECH_COMMAND;
-__sfr __at 0x3b SPEECH_CONTROL;
-__sfr __at 0x39 VOTRAX_COMMAND;
-__sfr __at 0x3f SOUND_COMMAND;
-
-
-#define SEGA_ANGLE(deg)    ((uint16_t)(((float)(deg))*2.845))
-#define divideBy3(x)       (((x)>>2)+((x)>>4))
-
-#define MIN(a,b)           (((a)<(b))?(a):(b))
-#define MAX(a,b)           (((a)>(b))?(a):(b))
-#define LSB(x)             (uint8_t)((uint16_t)(x) & 0xFF)
-#define MSB(x)             (uint8_t)(((uint16_t)(x) >> 8) & 0xFF)
-
-#define CENTER_X (1024)
-#define CENTER_Y (1024)
-#define MAX_X (1024+450)
-#define MIN_X (1024-450)
-#define MAX_Y (1024+400)
-#define MIN_Y (1024-400)
-
-// sounds
-#define BASE_DRUM    0x2E
-#define SNARE_DRUM   0x1E
-#define HAT_DRUM     0x0E
-#define TANK_MOVE    0x00
-#define TANK_FIRE    0x1A
+#include "sega.h"
 
 
 
@@ -203,129 +56,6 @@ static void delay(uint16_t ms) {
    }
 }
 
-static uint8_t rand(void) {
-   static uint8_t x = 0xC5;
-   x |= (x == 0);   // if x == 0, set x = 1 instead
-   x ^= (x & 0x07) << 5;
-   x ^= x >> 3;
-   x ^= (x & 0x03) << 6;
-   return x & 0xff;
-}
-
-static inline uint16_t xy_multiply( uint8_t x, uint8_t y ) {
-   XY_MULTIPLICAND = x;
-   XY_MULTIPLIER = y;
-   uint16_t product = XY_MULTIPLIER;
-   product += (uint16_t)XY_MULTIPLIER << 8;
-   return product;
-}
-
-
-static inline uint8_t clz8(uint8_t x) {
-    const uint8_t lookup[16] = { 4, 3, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
-    uint8_t upper = x >> 4;
-    uint8_t lower = x & 0x0F;
-    return upper ? lookup[upper] : 4 + lookup[lower];
-}
-
-
-static uint8_t clz(uint16_t x) {
-    uint8_t upper = MSB(x);
-    uint8_t lower = LSB(x);
-    return upper ? clz8(upper) : 8 + clz8(lower);
-}
-
-static uint16_t div_16(uint16_t u, uint16_t v) {
-   uint16_t q = 0;
-   int k = clz(v) - clz(u);
-   switch (k) {
-      case 15: if (v <= (u >> 15)) { u -= v << 15; q += 1 << 15; }
-      case 14: if (v <= (u >> 14)) { u -= v << 14; q += 1 << 14; }
-      case 13: if (v <= (u >> 13)) { u -= v << 13; q += 1 << 13; }
-      case 12: if (v <= (u >> 12)) { u -= v << 12; q += 1 << 12; }
-      case 11: if (v <= (u >> 11)) { u -= v << 11; q += 1 << 11; }
-      case 10: if (v <= (u >> 10)) { u -= v << 10; q += 1 << 10; }
-      case  9: if (v <= (u >>  9)) { u -= v <<  9; q += 1 <<  9; }
-      case  8: if (v <= (u >>  8)) { u -= v <<  8; q += 1 <<  8; }
-      case  7: if (v <= (u >>  7)) { u -= v <<  7; q += 1 <<  7; }
-      case  6: if (v <= (u >>  6)) { u -= v <<  6; q += 1 <<  6; }
-      case  5: if (v <= (u >>  5)) { u -= v <<  5; q += 1 <<  5; }
-      case  4: if (v <= (u >>  4)) { u -= v <<  4; q += 1 <<  4; }
-      case  3: if (v <= (u >>  3)) { u -= v <<  3; q += 1 <<  3; }
-      case  2: if (v <= (u >>  2)) { u -= v <<  2; q += 1 <<  2; }
-      case  1: if (v <= (u >>  1)) { u -= v <<  1; q += 1 <<  1; }
-      case  0: if (v <= (u >>  0)) { u -= v <<  0; q += 1 <<  0; }
-      default: break;
-   }
-   return q;
-}
-
-
-
-static uint8_t divideBy10(uint8_t *value) {
-    uint8_t count = 0;
-    while (*value >= 10) {
-        *value -= 10;
-        count++;
-    }
-    return count;
-}
-
-static uint8_t divideBy100(uint8_t *value) {
-    uint8_t count = 0;
-    while (*value >= 100) {
-        *value -= 100;
-        count++;
-    }
-    return count;
-}
-
-
-const uint8_t sin_table[] = {
-   0,2,3,5,6,8,9,11,13,14,16,17,19,20,22,23,25,27,28,30,31,33,34,36,38,39,41,42,44,45,47,48,50,51,53,54,56,58,59,61,62,64,65,
-   67,68,70,71,73,74,76,77,79,80,82,83,85,86,88,89,91,92,93,95,96,98,99,101,102,104,105,106,108,109,111,112,114,115,116,118,
-   119,120,122,123,125,126,127,129,130,131,133,134,135,137,138,139,141,142,143,145,146,147,148,150,151,152,153,155,156,157,
-   158,160,161,162,163,165,166,167,168,169,170,172,173,174,175,176,177,178,180,181,182,183,184,185,186,187,188,189,190,191,
-   192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,208,209,210,211,211,212,213,214,215,216,217,217,218,219,
-   220,221,221,222,223,224,224,225,226,227,227,228,229,229,230,231,231,232,233,233,234,235,235,236,236,237,238,238,239,239,
-   240,240,241,241,242,242,243,243,244,244,245,245,246,246,246,247,247,248,248,248,249,249,249,250,250,250,251,251,251,251,
-   252,252,252,252,253,253,253,253,253,254,254,254,254,254,254,254,254,255,255,255,255,255,255,255,255,255,255,255
-};
-
-// Ed Logg notes in his Asteroids code: SIN(PI+A) = -SIN(A) and COS(A) = SIN(A+PI/2)
-// the table then is just 0-90 degrees.
-// 90-180 is simply a reflection of 0-90
-// 180-360 is a negative sign reflection of 0-180
-// and cos is just sin rotated 90
-// the table is large because it's using sega's 10bit angle datatype units unscaled for speed
-
-int8_t sinlut(uint16_t sega_angle, bool *negsign) {
-    if ( sega_angle < SEGA_ANGLE(90) ) {
-        *negsign = false;
-        return sin_table[ sega_angle ];
-    }
-    if ( sega_angle < SEGA_ANGLE(180) ) {
-        sega_angle -= SEGA_ANGLE(90);
-        *negsign = false;
-        return sin_table[ SEGA_ANGLE(90) - sega_angle ];
-    }
-    if ( sega_angle < SEGA_ANGLE(270) ) {
-        sega_angle -= SEGA_ANGLE(180);
-        *negsign = true;
-        return sin_table[ sega_angle ];
-    }
-    sega_angle -= SEGA_ANGLE(270);
-    *negsign = true;
-    return sin_table[ SEGA_ANGLE(90) - sega_angle ];
-}
-
-uint8_t coslut(uint16_t sega_angle, bool *negsign) {
-    sega_angle += SEGA_ANGLE(90);
-    if (sega_angle>=SEGA_ANGLE(360)) {
-        sega_angle -= SEGA_ANGLE(360);
-    }
-    return sinlut( sega_angle, negsign );
-}
 
 
 static void vectorPosition( uint16_t sega_angle, uint16_t length, int16_t *x, int16_t *y ) {
@@ -483,43 +213,7 @@ static void sound_init(void) {
 #endif
 }
 
-typedef enum {
-   IMPULSE = 0x04,
-   IMPULSE_END = 0x05,
-   WARP = 0x06,
-   WARP_END = 0x07,
-   RED_ALERT = 0x0C,
-   RED_ALERT_END = 0x0D,
-   PHASER = 0x08,
-   PHOTON = 0x0A,
-   TARGETING = 0x0E,
-   DENY = 0x10,
-   SHIELD_HIT = 0x12,
-   ENTERPRISE_HIT = 0x14,
-   ENTERPRISE_EXPLOSION = 0x16,
-   KLINGON_EXPLOSION = 0x1A,
-   DOCK = 0x1C,
-   STARBASE_HIT = 0x1E,
-   STARBASE_RED = 0x11,
-   WARP_SUCK = 0x18,
-   WARP_SUCK_END = 0x2F,
-   SAUCER_EXIT = 0x19,
-   SAUCER_EXIT_END = 0x2F,
-   STARBASE_EXPLOSION = 0x22,
-   SMALL_BONUS = 0x24,
-   LARGE_BONUS = 0x25,
-   STARBASE_INTRO = 0x26,
-   KLINGON_INTRO = 0x27,
-   ENTERPRISE_INTRO = 0x28,
-   PLAYER_CHANGE = 0x29,
-   KLINGON_FIRE = 0x2E,
-   HIGH_SCORE_MUSIC = 0x2A,
-   COIN_DROP_MUSIC = 0x2B,
-   NOMAD_MOTION = 0x2C,
-   NOMAD_MOTION_END = 0x21,
-   NOMAD_STOPPED = 0x2D,
-   NOMAD_STOPPED_END = 0x21,
-} sound_t;
+
 
 
 void sound_test(void) {
@@ -603,35 +297,7 @@ void sound_test(void) {
    }
 }
 
-typedef enum {
-   NO_PHRASE = 0x00,                // no phrase
-   COMMAND_THE_ENTERPRISE = 0x01,   // "COMMAND THE ENTERPRISE"
-   PLAY_STAR_TREK = 0x02,           // "PLAY STAR TREK"
-   WELCOME_ABOARD_CAPTAIN = 0x03,   // "WELCOME ABOARD, CAPTAIN" (SPOCK)
-   CONGRATULATIONS = 0x04,          // "CONGRATULATIONS"
-   HIGH_SCORE = 0x05,               // "HIGH SCORE"
-   PRESS_PLAYER_ONE = 0x06,         // "PRESS PLAYER ONE"
-   OR_PLAYER_TWO = 0x07,            // "OR PLAYER TWO"
-   START = 0x08,                    // "START"
-   BE_THE_CAPTAIN = 0x09,           // "BE THE CAPTAIN OF THE STARSHIP ENTERPRISE" (SCOTTY)
-   DAMAGE_REPAIRED_SIR = 0x0A,      // "DAMAGE REPAIRED, SIR" (SCOTTY)
-   SECTOR_SECURED = 0x0B,           // "SECTOR SECURED" (CHEKOV)
-   ENTERING_SECTOR = 0x0C,          // "ENTERING SECTOR" (SPOCK)
-   ZERO = 0x0D,                     // "ZERO"
-   ONE = 0x0E,                      // "ONE"
-   TWO = 0x0F,                      // "TWO"
-   THREE = 0x10,                    // "THREE"
-   FOUR = 0x11,                     // "FOUR"
-   FIVE = 0x12,                     // "FIVE"
-   SIX = 0x13,                      // "SIX"
-   SEVEN = 0x14,                    // "SEVEN"
-   EIGHT = 0x15,                    // "EIGHT"
-   NINE = 0x16,                     // "NINE"
-   POINT = 0x17,                    // "POINT"
-   POINT_HIGHER_PITCH = 0x18,       // "POINT" (HIGHER PITCH)
-   RED_ALERT_PHRASE = 0x19,         // "RED ALERT"
-   LAST_PHRASE = 0x1A
-} phrase_t;
+
 
 static void say(uint8_t i) {
    SPEECH_COMMAND = i;
@@ -715,184 +381,21 @@ typedef struct {
 #define SEGA_COLOR_MAGENTA (SEGA_COLOR_RED|SEGA_COLOR_BLUE)
 #define SEGA_COLOR_WHITE   (SEGA_COLOR_RED|SEGA_COLOR_GREEN|SEGA_COLOR_BLUE)
 #define SEGA_COLOR_GRAY    (0x2A|SEGA_VISIBLE)
+#define SEGA_COLOR_BRWHITE (0x7E|SEGA_VISIBLE)
 #define SIZE(x)            (x*10)
-#define LE(x)              LSB(x), MSB(x)
 
 
 #define V_ADDR(x) (VECTOR_RAM+SYMBOLS_SZ+(x*4))
 #define S_ADDR(x) (VECTOR_RAM+(x*10))
 
-
-   const uint8_t font[] = {
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x18, 0x00, 0x00,  0x55, 0x1c, 0x00, 0x03,
-     0x55, 0x18, 0x01, 0x02,  0x54, 0x0c, 0x01, 0x00,  0xd5, 0x1c, 0x00, 0x01, // 'a'
-
-     0x54, 0x1b, 0x4c, 0x01,  0x55, 0x0c, 0xff, 0x03,  0x55, 0x18, 0x02, 0x03,
-     0x55, 0x18, 0x00, 0x02,  0x55, 0x1c, 0x01, 0x01,  0x55, 0x0c, 0x00, 0x00,
-     0xd5, 0x1c, 0x01, 0x03,                                                   // 'b'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x1c, 0x00, 0x03,  0x55, 0x18, 0x00, 0x00, 
-     0xd5, 0x1c, 0x00, 0x01,                                                   // 'c'
-
-     0x54, 0x1f, 0x8f, 0x01,  0x55, 0x14, 0xff, 0x02,  0x55, 0x18, 0x02, 0x00, 
-     0x55, 0x14, 0x00, 0x01,  0x55, 0x0b, 0x81, 0x01,  0xd5, 0x12, 0x49, 0x02, // 'd'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x1c, 0x00, 0x03,  0x55, 0x18, 0x00, 0x00,
-     0x55, 0x1c, 0x00, 0x01,  0x54, 0x0c, 0x02, 0x02,  0xd5, 0x1c, 0x00, 0x03, // 'e'
-
-     0x54, 0x18, 0x00, 0x02,  0x55, 0x18, 0x01, 0x00,  0x55, 0x1c, 0x00, 0x01,
-     0x54, 0x0c, 0x02, 0x02,  0xd5, 0x1c, 0x00, 0x03,                          // 'f'
-
-     0x54, 0x11, 0x80, 0x01,  0x55, 0x10, 0x00, 0x01,  0x55, 0x0c, 0x00, 0x02,
-     0x55, 0x1c, 0x01, 0x03,  0x55, 0x18, 0x01, 0x00,  0xd5, 0x1c, 0x01, 0x01, // 'g'
-
-     0x54, 0x1c, 0x00, 0x01,  0x55, 0x18, 0x00, 0x02,  0x54, 0x0c, 0x01, 0x00,
-     0x55, 0x1c, 0x01, 0x03,  0x54, 0x0c, 0x01, 0x02,  0xd5, 0x18, 0x01, 0x00, // 'h'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x1c, 0x00, 0x03,  0x54, 0x0e, 0x00, 0x01,
-     0x55, 0x18, 0x00, 0x00,  0x54, 0x0e, 0x00, 0x01,  0xd5, 0x1c, 0x00, 0x03, // 'i'
-
-     0x54, 0x1c, 0x00, 0x01,  0x55, 0x18, 0x00, 0x02,  0x55, 0x1c, 0x01, 0x03,
-     0xd5, 0x08, 0x01, 0x00,                                                   // 'j'
-
-     0x54, 0x1c, 0x00, 0x01,  0x55, 0x1e, 0xbe, 0x02,  0x54, 0x0c, 0xfb, 0x03,
-     0x55, 0x18, 0x00, 0x02,  0x54, 0x1c, 0x01, 0x01,  0xd5, 0x18, 0x81, 0x03, // 'k'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x1c, 0x00, 0x03,  0xd5, 0x18, 0x00, 0x00, // 'l'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x18, 0x00, 0x00,  0x55, 0x14, 0x98, 0x02,
-     0x55, 0x11, 0x80, 0x03,  0xd5, 0x18, 0x01, 0x02,                          // 'm'
-
-     0x54, 0x1c, 0x00, 0x01,  0x55, 0x18, 0x00, 0x02,  0x55, 0x25, 0x74, 0x03,
-     0xd5, 0x18, 0x00, 0x02,                                                   // 'n'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x18, 0x00, 0x00,  0x55, 0x1c, 0x00, 0x03,
-     0x55, 0x18, 0x01, 0x02,  0xd5, 0x1c, 0x00, 0x01,                          // 'o'
-
-     0x54, 0x18, 0x00, 0x02,  0x55, 0x18, 0x01, 0x00,  0x55, 0x1c, 0x00, 0x01,
-     0x55, 0x0c, 0x02, 0x02,  0xd5, 0x1c, 0x00, 0x03,                          // 'p'
-  
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x18, 0x00, 0x00,  0x55, 0x1c, 0x00, 0x03,
-     0x55, 0x18, 0x01, 0x02,  0x55, 0x1c, 0x00, 0x01,  0x54, 0x04, 0x01, 0x02,
-     0xd5, 0x0b, 0x81, 0x03,                                                   // 'q'
-
-     0x54, 0x18, 0x00, 0x02,  0x55, 0x18, 0x01, 0x00,  0x55, 0x1c, 0x00, 0x01,
-     0x55, 0x0c, 0x02, 0x02,  0x55, 0x1c, 0x00, 0x03,  0x54, 0x0c, 0x00, 0x01,
-     0xd5, 0x14, 0x69, 0x01,                                                   // 'r'
-
-     0x54, 0x18, 0x00, 0x02,  0x55, 0x1c, 0x00, 0x01,  0x55, 0x0c, 0x01, 0x00,
-     0x55, 0x1c, 0x01, 0x03,  0x55, 0x0c, 0x00, 0x00,  0xd5, 0x1c, 0x01, 0x01, // 's'
-
-     0x54, 0x1c, 0xaa, 0x01,  0x55, 0x18, 0x00, 0x00,  0x54, 0x0e, 0xff, 0x00,
-     0xd5, 0x1c, 0x02, 0x03,                                                   // 't'
-
-     0x54, 0x1c, 0x00, 0x01,  0x55, 0x18, 0x00, 0x02,  0x55, 0x1c, 0x01, 0x03,
-     0xd5, 0x18, 0x01, 0x00,                                                   // 'u' 
-
-     0x54, 0x1c, 0x00, 0x01,  0x55, 0x1d, 0x60, 0x02,  0xd5, 0x1b, 0xb6, 0x03, // 'v'
-
-     0x54, 0x1c, 0x00, 0x01,  0x55, 0x18, 0x00, 0x02,  0x55, 0x11, 0x81, 0x03,
-     0x55, 0x14, 0x97, 0x02,  0xd5, 0x18, 0x01, 0x00,                          // 'w'
-
-     0x54, 0x1c, 0x00, 0x01,  0x55, 0x25, 0x8d, 0x02,  0x54, 0x1c, 0x00, 0x01,
-     0xd5, 0x25, 0x75, 0x03,                                                   // 'x'
-
-     0x54, 0x1c, 0x00, 0x01,  0x55, 0x0c, 0x00, 0x02,  0x55, 0x1c, 0x01, 0x03,
-     0x55, 0x0c, 0x01, 0x00,  0x54, 0x12, 0x75, 0x01,  0xd5, 0x0c, 0xfb, 0x01, // 'y'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x1c, 0x00, 0x03,  0x55, 0x25, 0x8d, 0x00,
-     0xd5, 0x1c, 0x01, 0x03,                                                   // 'z'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x18, 0x00, 0x00,  0x55, 0x1c, 0x00, 0x03,
-     0x55, 0x18, 0x01, 0x02,  0xd5, 0x1c, 0x00, 0x01,                          // '0'
-
-     0x54, 0x1c, 0xaa, 0x01,  0xd5, 0x18, 0x00, 0x00,                          // '1'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x1c, 0x00, 0x03,  0x55, 0x0c, 0xff, 0x03,
-     0x55, 0x1c, 0x00, 0x01,  0x55, 0x0c, 0x00, 0x00,  0xd5, 0x1c, 0x00, 0x03, // '2'
-
-     0x54, 0x18, 0x00, 0x02,  0x55, 0x1c, 0x00, 0x01,  0x55, 0x18, 0x01, 0x00,
-     0x55, 0x1c, 0x01, 0x03,  0x54, 0x0c, 0x02, 0x02,  0xd5, 0x1c, 0x01, 0x01, // '3'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x18, 0x00, 0x00,  0x54, 0x0c, 0x02, 0x02,
-     0x55, 0x1c, 0x00, 0x03,  0xd5, 0x0c, 0x01, 0x00,                          // '4'
-
-     0x54, 0x18, 0x00, 0x02,  0x55, 0x1c, 0x00, 0x01,  0x55, 0x0c, 0x01, 0x00,
-     0x55, 0x1c, 0x01, 0x03,  0x55, 0x0c, 0x00, 0x00,  0xd5, 0x1c, 0x01, 0x01, // '5' 
-
-     0x54, 0x0c, 0x00, 0x02,  0x55, 0x1c, 0x00, 0x01,  0x55, 0x0c, 0x00, 0x02, 
-     0x55, 0x1c, 0x01, 0x03,  0xd5, 0x18, 0x01, 0x00,                          // '6'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x18, 0x00, 0x00,  0xd5, 0x1c, 0x00, 0x03, // '7'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x18, 0x00, 0x00,  0x55, 0x1c, 0x00, 0x03, 
-     0x55, 0x18, 0x01, 0x02,  0x55, 0x1c, 0x00, 0x01,  0x54, 0x0c, 0x01, 0x00, 
-     0xd5, 0x1c, 0x00, 0x03,                                                   // '8'
-
-     0x54, 0x25, 0x73, 0x01,  0x55, 0x18, 0x00, 0x00,  0x55, 0x1c, 0x00, 0x03,
-     0x55, 0x0c, 0x02, 0x02,  0xd5, 0x1c, 0x00, 0x01,                          // '9'
-
-
-// 0x02cc + 20
-     // press start
-     0x18, 0x18, 0x00, 0x02,  0x19, 0x18, 0x01, 0x00,  0x19, 0x1c, 0x00, 0x01,
-     0x19, 0x0c, 0x02, 0x02,  0x19, 0x1c, 0x00, 0x03,                          // 'p'
-
-     0x18, 0x0c, LE(SEGA_ANGLE(0)),
-     0x18, 0x21, LE(SEGA_ANGLE(90)),
-
-     0x18, 0x18, 0x00, 0x02,  0x19, 0x18, 0x01, 0x00,  0x19, 0x1c, 0x00, 0x01,
-     0x19, 0x0c, 0x02, 0x02,  0x19, 0x1c, 0x00, 0x03,  0x18, 0x0c, 0x00, 0x01,
-     0x19, 0x14, 0x69, 0x01,                                                   // 'r'
-
-     0x18, 0x18, LE(SEGA_ANGLE(0)),
-     0x18, 0x04, LE(SEGA_ANGLE(90)),
-
-     0x18, 0x25, 0x73, 0x01,  0x19, 0x1c, 0x00, 0x03,  0x19, 0x18, 0x00, 0x00,
-     0x19, 0x1c, 0x00, 0x01,  0x18, 0x0c, 0x02, 0x02,  0x19, 0x1c, 0x00, 0x03, // 'e'
-
-     0x18, 0x0c, LE(SEGA_ANGLE(0)),
-     0x18, 0x21, LE(SEGA_ANGLE(90)),
-
-     0x18, 0x18, 0x00, 0x02,  0x19, 0x1c, 0x00, 0x01,  0x19, 0x0c, 0x01, 0x00,
-     0x19, 0x1c, 0x01, 0x03,  0x19, 0x0c, 0x00, 0x00,  0x19, 0x1c, 0x01, 0x01, // 's'
-
-     0x18, 0x04, LE(SEGA_ANGLE(90)),
-
-     0x18, 0x18, 0x00, 0x02,  0x19, 0x1c, 0x00, 0x01,  0x19, 0x0c, 0x01, 0x00,
-     0x19, 0x1c, 0x01, 0x03,  0x19, 0x0c, 0x00, 0x00,  0x19, 0x1c, 0x01, 0x01, // 's'
-
-     0x18, 0x18, LE(SEGA_ANGLE(90)),
-
-     0x18, 0x18, 0x00, 0x02,  0x19, 0x1c, 0x00, 0x01,  0x19, 0x0c, 0x01, 0x00,
-     0x19, 0x1c, 0x01, 0x03,  0x19, 0x0c, 0x00, 0x00,  0x19, 0x1c, 0x01, 0x01, // 's'
-
-     0x18, 0x04, LE(SEGA_ANGLE(90)),
-
-     0x18, 0x1c, 0xaa, 0x01,  0x19, 0x18, 0x00, 0x00,  0x18, 0x0e, 0xff, 0x00,
-     0x19, 0x1c, 0x02, 0x03,                                                   // 't'
-
-     0x18, 0x21, LE(SEGA_ANGLE(90)),
-
-     0x18, 0x25, 0x73, 0x01,  0x19, 0x18, 0x00, 0x00,  0x19, 0x1c, 0x00, 0x03,
-     0x19, 0x18, 0x01, 0x02,  0x18, 0x0c, 0x01, 0x00,  0x19, 0x1c, 0x00, 0x01, // 'a'
-
-     0x18, 0x0c, LE(SEGA_ANGLE(0)),
-     0x18, 0x04, LE(SEGA_ANGLE(90)),
-
-     0x18, 0x18, 0x00, 0x02,  0x19, 0x18, 0x01, 0x00,  0x19, 0x1c, 0x00, 0x01,
-     0x19, 0x0c, 0x02, 0x02,  0x19, 0x1c, 0x00, 0x03,  0x18, 0x0c, 0x00, 0x01,
-     0x19, 0x14, 0x69, 0x01,                                                   // 'r'
-
-     0x18, 0x18, LE(SEGA_ANGLE(0)),
-     0x18, 0x04, LE(SEGA_ANGLE(90)),
-
-     0x18, 0x1c, 0xaa, 0x01,  0x19, 0x18, 0x00, 0x00,  0x18, 0x0e, 0xff, 0x00,
-     0x99, 0x1c, 0x02, 0x03,                                                   // 't'
-
-   };
-
-   #define FONT_RAM_SIZE 0x02cc + 20 + 232
+static void colorize( uint16_t addr, uint16_t len, uint8_t color ) {
+   uint8_t *data = (uint8_t*)addr;
+   for (uint16_t i=0; i<len || !len; i+=4) {
+      data[i] &= ~0x7E;
+      data[i] |= (color & 0x7E);
+      if ( !len && (data[i]&SEGA_LAST)) return;
+   }
+}
 
    const uint8_t vector[] = {
        #define V_LINE  (0)
@@ -1254,13 +757,15 @@ static void vector_init(void) {
    #if V_ADDR(V_LAST) > (VECTOR_RAM+VECTOR_RAM_SZ)
        #error 'vectors do not fit in memory'
    #endif
-   #if FONT_RAM_BASE+FONT_RAM_SIZE > (VECTOR_RAM+VECTOR_RAM_SZ)
-       #error 'fonts do not fit in memory'
-   #endif
 
    memcpy( symbols, symbol, sizeof(symbol) );
    memcpy( vectors, vector, sizeof(vector) );
-   memcpy( vectors+sizeof(vector), font, sizeof(font) );
+
+   installFonts( (uint16_t)vectors+sizeof(vector) );
+   // TODO: this should break the build if it doesn't fit.
+   // #if FONT_RAM_BASE+FONT_RAM_SIZE > (VECTOR_RAM+VECTOR_RAM_SZ)
+   //     #error 'fonts do not fit in memory'
+   // #endif
 }
 
 
@@ -1368,18 +873,6 @@ static inline uint8_t quadrant( uint16_t x, uint16_t y ) {
          return 1; // top right
       }
    }
-}
-
-static uint8_t symbol_data[10] = {0,};
-static uint16_t symbol_sid = 0;
-
-static void pushSymbol( uint8_t sid ) {
-   symbol_sid = sid;
-   memcpy( symbol_data, &symbols[ SFIELD_VISIBLE(symbol_sid) ], sizeof(symbol_data) );
-}
-
-static void popSymbol( void ) {
-   memcpy( &symbols[ SFIELD_VISIBLE(symbol_sid) ], symbol_data, sizeof(symbol_data) );
 }
 
 static void enableSymbol( uint8_t sid, uint16_t x, uint16_t y, uint16_t sega_angle, uint8_t scale ) {
@@ -1637,16 +1130,7 @@ static bool drawMissle(uint8_t *dist, int16_t *x, int16_t *y) {
    return false;
 }
 
-static uint16_t fontAddress( char c ) {
-   const uint16_t font_alpha[] = {
-      0x0000,0x0018,0x0034,0x0044,0x005c,0x0074,0x0088,0x00a0,0x00b8,0x00d0,
-      0x00e0,0x00f8,0x0104,0x0118,0x0128,0x013c,0x0150,0x016c,0x0188,0x01a0,
-      0x01b0,0x01c0,0x01cc,0x01e0,0x01f0,0x0208};
-   const uint16_t font_numeric[] = {
-      0x0218,0x022c,0x0234,0x024c,0x0264,0x0278,0x0290,0x02a4,0x02b0,0x02cc};
-   if ( c>='0' && c<= '9' ) return FONT_RAM_BASE + font_numeric[ c-'0' ];
-   return FONT_RAM_BASE + font_alpha[ c-'a' ];
-}
+
 
 typedef enum {
    game_state_boot,
@@ -1657,18 +1141,32 @@ typedef enum {
 } game_state_t;
 
 static void beginAttract( void ) {
+   // set font 'a' thru 'z' to brightest white for glow effect
+   colorize( fontAddress('a'), fontAddress('z')-fontAddress('a'), SEGA_COLOR_BRWHITE );
    enableSymbol( S_DIG0, MIN_X-70, CENTER_Y, SEGA_ANGLE(0), 0xFE );
 
-   enableSymbol( S_DIG1, CENTER_X-165, MIN_Y+40, SEGA_ANGLE(0), 0x80 );
-   uint16_t addr = FONT_RAM_BASE + 0x02cc + (5*4); // 'press start'
-   symbols[ SFIELD_ADDR_L(S_DIG1) ] = LSB( addr );
-   symbols[ SFIELD_ADDR_H(S_DIG1) ] = MSB( addr );
+   // colorize( fontAddress( FONT_INSERT_COIN ), 0, SEGA_COLOR_BLUE );
+   // symbols[ SFIELD_ADDR_L(S_DIG1) ] = LSB( fontAddress( FONT_INSERT_COIN ) );
+   // symbols[ SFIELD_ADDR_H(S_DIG1) ] = MSB( fontAddress( FONT_INSERT_COIN ) );
+   // enableSymbol( S_DIG1, CENTER_X-165, MIN_Y+40, SEGA_ANGLE(0), 0x80 );
+
+   colorize( fontAddress( FONT_GAME_OVER ), 0, SEGA_COLOR_BLUE );
+   symbols[ SFIELD_ADDR_L(S_DIG1) ] = LSB( fontAddress( FONT_GAME_OVER) );
+   symbols[ SFIELD_ADDR_H(S_DIG1) ] = MSB( fontAddress( FONT_GAME_OVER ) );
+   enableSymbol( S_DIG1, CENTER_X-165, CENTER_Y-40, SEGA_ANGLE(0), 0xAA );
 
    symbols[ SFIELD_VISIBLE(S_DIG2) ] = SEGA_LAST;
 }
 
 static void endAttract( void ) {
 
+   // set font 'a' thru 'z' to regular white
+   colorize( fontAddress('a'), fontAddress('z')-fontAddress('a'), SEGA_COLOR_WHITE );
+
+   // set numbers '0' thru '9' to pink
+   colorize( fontAddress('0'), fontAddress('9')-fontAddress('0'), SEGA_COLOR_MAGENTA );
+
+   // TODO: should restore positions and scales only (not make visible)
    enableSymbol( S_DIG0, CENTER_X-40, MIN_Y+30, SEGA_ANGLE(0), 0x40 );
    enableSymbol( S_DIG1, CENTER_X,    MIN_Y+30, SEGA_ANGLE(0), 0x40 );
    enableSymbol( S_DIG2, CENTER_X+40, MIN_Y+30, SEGA_ANGLE(0), 0x40 );
@@ -1765,9 +1263,9 @@ static bool drawScore( uint8_t score ) {
       static uint16_t *dig0_addr = &symbols[ SFIELD_ADDR_L(S_DIG0) ];
       static uint16_t *dig1_addr = &symbols[ SFIELD_ADDR_L(S_DIG1) ];
       static uint16_t *dig2_addr = &symbols[ SFIELD_ADDR_L(S_DIG2) ];
-      *dig0_addr = fontAddress( d0 + '0' );
-      *dig1_addr = fontAddress( d1 + '0' );
-      *dig2_addr = fontAddress( d2 + '0' );
+      *dig0_addr =  fontAddress( d0 + '0' );
+      *dig1_addr =  fontAddress( d1 + '0' );
+      *dig2_addr =  fontAddress( d2 + '0' );
    }
    return false;
 }
@@ -2055,8 +1553,6 @@ void main(void) {
 #ifdef ENABLE_UART
    send_uart_data("boot\r\n",6);
 #endif
-
-   say( START );
 
    for (;;) {
       super_loop();
