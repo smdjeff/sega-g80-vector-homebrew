@@ -329,73 +329,6 @@ static void say8(uint8_t v) {
 }
 
 
-typedef struct {
-   uint8_t last   : 1;
-   uint8_t group  : 6;
-   uint8_t visible : 1;
-   uint16_t x;
-   uint16_t y;
-   uint16_t vector_addr; // E000 - EFFF 4k Vector RAM
-   uint16_t rotation; // 10 bit angle of whole symbol
-   uint8_t scale; // 0x40 = 1/2, 0x80 = 1x, 0xff = 2x
-} symbol_t; // 10 bytes
-
-#define SFIELD_VISIBLE(row) (((row)*10)+0)
-#define SFIELD_X_L(row)     (((row)*10)+1)
-#define SFIELD_X_H(row)     (((row)*10)+2)
-#define SFIELD_Y_L(row)     (((row)*10)+3)
-#define SFIELD_Y_H(row)     (((row)*10)+4)
-#define SFIELD_ADDR_L(row)  (((row)*10)+5)
-#define SFIELD_ADDR_H(row)  (((row)*10)+6)
-#define SFIELD_ANGLE_L(row) (((row)*10)+7)
-#define SFIELD_ANGLE_H(row) (((row)*10)+8)
-#define SFIELD_SCALE(row)   (((row)*10)+9)
-
-typedef struct {
-   uint8_t last   : 1;
-   uint8_t red    : 2;
-   uint8_t green  : 2;
-   uint8_t blue    : 2;
-   uint8_t visible : 1;
-   uint8_t length;   // unscaled size
-   uint8_t angle;   // degrees
-   uint8_t quadrant; // msb of 10 bit angle
-} vector_t; // 4 bytes
-
-#define VFIELD_COLOR(row)   (((row)*4)+0)
-#define VFIELD_SIZE(row)    (((row)*4)+1)
-#define VFIELD_ANGLE_L(row) (((row)*4)+2)
-#define VFIELD_ANGLE_H(row) (((row)*4)+3)
-
-// L R R G G B B D
-#define SEGA_VISIBLE       (0x01)
-#define SEGA_LAST          (0x80)
-#define SEGA_CLEAR         (0)
-#define SEGA_COLOR_RED     (0x60|SEGA_VISIBLE)
-#define SEGA_COLOR_GREEN   (0x18|SEGA_VISIBLE)
-#define SEGA_COLOR_GREEN1  (0x10|SEGA_VISIBLE)
-#define SEGA_COLOR_GREEN2  (0x08|SEGA_VISIBLE)
-#define SEGA_COLOR_BLUE    (0x06|SEGA_VISIBLE)
-#define SEGA_COLOR_YELLOW  (SEGA_COLOR_RED|SEGA_COLOR_GREEN)
-#define SEGA_COLOR_CYAN    (SEGA_COLOR_GREEN|SEGA_COLOR_BLUE)
-#define SEGA_COLOR_MAGENTA (SEGA_COLOR_RED|SEGA_COLOR_BLUE)
-#define SEGA_COLOR_WHITE   (SEGA_COLOR_RED|SEGA_COLOR_GREEN|SEGA_COLOR_BLUE)
-#define SEGA_COLOR_GRAY    (0x2A|SEGA_VISIBLE)
-#define SEGA_COLOR_BRWHITE (0x7E|SEGA_VISIBLE)
-#define SIZE(x)            (x*10)
-
-
-#define V_ADDR(x) (VECTOR_RAM+SYMBOLS_SZ+(x*4))
-#define S_ADDR(x) (VECTOR_RAM+(x*10))
-
-static void colorize( uint16_t addr, uint16_t len, uint8_t color ) {
-   uint8_t *data = (uint8_t*)addr;
-   for (uint16_t i=0; i<len || !len; i+=4) {
-      data[i] &= ~0x7E;
-      data[i] |= (color & 0x7E);
-      if ( !len && (data[i]&SEGA_LAST)) return;
-   }
-}
 
    const uint8_t vector[] = {
        #define V_LINE  (0)
@@ -1140,23 +1073,18 @@ typedef enum {
    game_state_test
 } game_state_t;
 
+
 static void beginAttract( void ) {
-   // set font 'a' thru 'z' to brightest white for glow effect
+   // set font 'a' thru 'z' to brightest white for phosphor afterglow
    colorize( fontAddress('a'), fontAddress('z')-fontAddress('a'), SEGA_COLOR_BRWHITE );
    enableSymbol( S_DIG0, MIN_X-70, CENTER_Y, SEGA_ANGLE(0), 0xFE );
 
-   // colorize( fontAddress( FONT_INSERT_COIN ), 0, SEGA_COLOR_BLUE );
-   // symbols[ SFIELD_ADDR_L(S_DIG1) ] = LSB( fontAddress( FONT_INSERT_COIN ) );
-   // symbols[ SFIELD_ADDR_H(S_DIG1) ] = MSB( fontAddress( FONT_INSERT_COIN ) );
-   // enableSymbol( S_DIG1, CENTER_X-165, MIN_Y+40, SEGA_ANGLE(0), 0x80 );
+   drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_BLUE, "insert coin" );
 
-   colorize( fontAddress( FONT_GAME_OVER ), 0, SEGA_COLOR_BLUE );
-   symbols[ SFIELD_ADDR_L(S_DIG1) ] = LSB( fontAddress( FONT_GAME_OVER) );
-   symbols[ SFIELD_ADDR_H(S_DIG1) ] = MSB( fontAddress( FONT_GAME_OVER ) );
-   enableSymbol( S_DIG1, CENTER_X-165, CENTER_Y-40, SEGA_ANGLE(0), 0xAA );
-
+   // disable all other symbols on screen
    symbols[ SFIELD_VISIBLE(S_DIG2) ] = SEGA_LAST;
 }
+
 
 static void endAttract( void ) {
 

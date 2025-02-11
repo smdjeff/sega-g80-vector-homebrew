@@ -134,6 +134,65 @@ __sfr __at 0x3f SOUND_COMMAND;
 #define MSB(x)             (uint8_t)(((uint16_t)(x) >> 8) & 0xFF)
 #define LE(x)              LSB(x), MSB(x)
 
+#define V_ADDR(x) (VECTOR_RAM+SYMBOLS_SZ+(x*4))
+#define S_ADDR(x) (VECTOR_RAM+(x*10))
+
+
+typedef struct {
+   uint8_t last   : 1;
+   uint8_t group  : 6;
+   uint8_t visible : 1;
+   uint16_t x;
+   uint16_t y;
+   uint16_t vector_addr; // E000 - EFFF 4k Vector RAM
+   uint16_t rotation; // 10 bit angle of whole symbol
+   uint8_t scale; // 0x40 = 1/2, 0x80 = 1x, 0xff = 2x
+} symbol_t; // 10 bytes
+
+#define SFIELD_VISIBLE(row) (((row)*10)+0)
+#define SFIELD_X_L(row)     (((row)*10)+1)
+#define SFIELD_X_H(row)     (((row)*10)+2)
+#define SFIELD_Y_L(row)     (((row)*10)+3)
+#define SFIELD_Y_H(row)     (((row)*10)+4)
+#define SFIELD_ADDR_L(row)  (((row)*10)+5)
+#define SFIELD_ADDR_H(row)  (((row)*10)+6)
+#define SFIELD_ANGLE_L(row) (((row)*10)+7)
+#define SFIELD_ANGLE_H(row) (((row)*10)+8)
+#define SFIELD_SCALE(row)   (((row)*10)+9)
+
+typedef struct {
+   uint8_t last   : 1;
+   uint8_t red    : 2;
+   uint8_t green  : 2;
+   uint8_t blue    : 2;
+   uint8_t visible : 1;
+   uint8_t length;   // unscaled size
+   uint8_t angle;   // degrees
+   uint8_t quadrant; // msb of 10 bit angle
+} vector_t; // 4 bytes
+
+#define VFIELD_COLOR(row)   (((row)*4)+0)
+#define VFIELD_SIZE(row)    (((row)*4)+1)
+#define VFIELD_ANGLE_L(row) (((row)*4)+2)
+#define VFIELD_ANGLE_H(row) (((row)*4)+3)
+
+// L R R G G B B D
+#define SEGA_VISIBLE       (0x01)
+#define SEGA_LAST          (0x80)
+#define SEGA_CLEAR         (0)
+#define SEGA_COLOR_RED     (0x60|SEGA_VISIBLE)
+#define SEGA_COLOR_GREEN   (0x18|SEGA_VISIBLE)
+#define SEGA_COLOR_GREEN1  (0x10|SEGA_VISIBLE)
+#define SEGA_COLOR_GREEN2  (0x08|SEGA_VISIBLE)
+#define SEGA_COLOR_BLUE    (0x06|SEGA_VISIBLE)
+#define SEGA_COLOR_YELLOW  (SEGA_COLOR_RED|SEGA_COLOR_GREEN)
+#define SEGA_COLOR_CYAN    (SEGA_COLOR_GREEN|SEGA_COLOR_BLUE)
+#define SEGA_COLOR_MAGENTA (SEGA_COLOR_RED|SEGA_COLOR_BLUE)
+#define SEGA_COLOR_WHITE   (SEGA_COLOR_RED|SEGA_COLOR_GREEN|SEGA_COLOR_BLUE)
+#define SEGA_COLOR_GRAY    (0x2A|SEGA_VISIBLE)
+#define SEGA_COLOR_BRWHITE (0x7E|SEGA_VISIBLE)
+#define SIZE(x)            (x*10)
+
 #define CENTER_X (1024)
 #define CENTER_Y (1024)
 #define MAX_X (1024+450)
@@ -220,11 +279,12 @@ typedef enum {
 
 ////////////////////////////////////
 // font.h
-#define FONT_INSERT_COIN 0x01
-#define FONT_PRESS_START 0x02
-#define FONT_GAME_OVER   0x03
+#define FONT_STRING 0x01
 uint16_t installFonts( uint16_t addr );
 uint16_t fontAddress( char c );
+void drawString( uint8_t *symbol, uint16_t x, uint16_t y, uint8_t scale, uint8_t color, char *str );
+void colorize( uint16_t addr, uint16_t len, uint8_t color );
+void enableSymbol( uint8_t sid, uint16_t x, uint16_t y, uint16_t sega_angle, uint8_t scale );
 
 ////////////////////////////////////
 // math.h
