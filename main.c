@@ -10,8 +10,13 @@
 
 
 
-static uint8_t nmi_counter = 0;
-static uint16_t system_tick = 0;
+static volatile uint8_t nmi_counter = 0;
+static volatile uint16_t system_tick = 0;
+static volatile uint8_t _coin_counter = 0;
+static uint8_t score = 0;
+static uint8_t high_score = 0;
+static game_state_t game_state = game_state_boot;
+static uint8_t sound_track = 0;
 
 
 // NMI int (the cpu board button was pushed)
@@ -35,12 +40,24 @@ void z80_rst_38h (void) __critical __interrupt(0) {
    system_tick++;
 
    static uint8_t div = 0;
-   if ( div >= 10 ) {
+   if ( div >= 5 ) {
       div = 0;
-      // this is a 4Hz, 250ms timer
+      // this is a 8Hz, 125ms timer
       timer_interrupt_4Hz();
    }
    div++;
+
+   static uint8_t debounce = 0;
+   if ( debounce == 0 ) {
+      if ( !(PORT_370 & IO_COIN_N) ) {
+         debounce = 20; // half second
+         _coin_counter++;
+         SOUND_COMMAND = COIN_DROP;
+      }
+   } else {
+      debounce--;
+   }
+
    volatile uint8_t intcl = PORT_370; // force INTCL
 }
 
@@ -81,72 +98,6 @@ static void vectorPosition( uint16_t sega_angle, uint16_t length, int16_t *x, in
 }
 
 
-#ifdef ENABLE_UART
-
-static void send_uart_byte(uint8_t b) {
-   // ~16us per bit at 8.0MHz, approx 57600
-   uint8_t start_bit = 0x00;
-   uint8_t d0 = (b & (1<<0)) ? 0x01 : 0x00;
-   uint8_t d1 = (b & (1<<1)) ? 0x01 : 0x00;
-   uint8_t d2 = (b & (1<<2)) ? 0x01 : 0x00;
-   uint8_t d3 = (b & (1<<3)) ? 0x01 : 0x00;
-   uint8_t d4 = (b & (1<<4)) ? 0x01 : 0x00;
-   uint8_t d5 = (b & (1<<5)) ? 0x01 : 0x00;
-   uint8_t d6 = (b & (1<<6)) ? 0x01 : 0x00;
-   uint8_t d7 = (b & (1<<7)) ? 0x01 : 0x00;
-   uint8_t stop_bit = 0x01;
-
-   PORT_370 = start_bit;
-   PORT_370 = d0;
-   PORT_370 = d1;
-   PORT_370 = d2;
-   PORT_370 = d3;
-   PORT_370 = d4;
-   PORT_370 = d5;
-   PORT_370 = d6;
-   PORT_370 = d7;
-   PORT_370 = stop_bit;
-}
-
-static void send_uart_data(const char *data, uint8_t len) {
-   for(uint8_t i=0; i<len; i++) {
-      send_uart_byte( data[i] );
-   }
-}
-
-static void sprint8(char *s, uint8_t v) {
-    const char *hex = "0123456789abcdef";
-    s[0] = hex[ (v >> 4) & 0xf ];
-    s[1] = hex[ (v >> 0) & 0xf ];
-}
-
-static void sprint16(char *s, uint16_t v) {
-   sprint8( &s[0], (uint8_t)(v>>8)&0xff );
-   sprint8( &s[2], (uint8_t)(v>>0)&0xff );
-}
-
-static void sprint32(char *s, uint32_t v) {
-    sprint16( &s[0], (uint16_t)(v>>16)&0xffff );
-    sprint16( &s[4], (uint16_t)(v&0xffff) );
-}
-
-#endif // ENABLE_UART
-
-
-static uint8_t sound_wait(void) {
-   uint16_t timeout = 3000/50;
-   while ( timeout-- ) {
-      if ( (SOUND_COMMAND & 0xFE) == 0x80 ) {
-         // 8035 ready for next command
-         //delay( 250 ); // wait for sound to finish
-         return 0;
-      }
-      delay( 50 );
-   }
-   return 1;
-}
-
-
 static void sound_init(void) {
    // copy main board ROMs into sound board's RAM 
    // so the 8035 can execute it
@@ -155,148 +106,8 @@ static void sound_init(void) {
    SOUND_COMMAND = 0xFF; // assert RAM LOAD latch
    memcpy( (uint8_t*)USB_RAM, (uint8_t*)USB_ROM_A, USB_ROM_SZ_A );
    SOUND_COMMAND = 0x7F; 
-
-#if 0 // observed, but unnecessary, factory initalization 
-   SPEECH_CONTROL = 0x28;
-   SPEECH_CONTROL = 0x28;
-
-   // bounce 8035
-   SOUND_COMMAND = 0xFF; 
-   SOUND_COMMAND = 0x7F; 
-
-   // overwrite last 2k  - is this ONLY for the MUSIC sounds
-   SOUND_COMMAND = 0xFF; // assert RAM LOAD latch
-   memcpy( USB_RAM+USB_ROM_SZ_B, USB_ROM_B, USB_ROM_SZ_B );
-   SOUND_COMMAND = 0x7F; 
-
-   sound_wait();
-   SOUND_COMMAND = 0x2B; // COIN_DROP_MUSIC
-   delay(5000);
-
-   SPEECH_CONTROL = 0x28;
-   // bounce 8035
-   SOUND_COMMAND = 0xFF; 
-   SOUND_COMMAND = 0x7F; 
-
-   const uint8_t speech_init[] = { 0x3f, 0xbf, 0x0a, 0x8a, 0x08, 0x88, 0x03, 0x83 };
-   for (uint8_t i=0; i<sizeof(speech_init); i++) {
-      SPEECH_COMMAND = speech_init[i];
-   }
-
-   SPEECH_CONTROL = 0x28;
-   // load 4k again
-   SOUND_COMMAND = 0xFF; // assert RAM LOAD latch
-   memcpy( USB_RAM, USB_ROM_A, USB_ROM_SZ_A );
-   SOUND_COMMAND = 0x7F; 
-
-   sound_wait();
-   SOUND_COMMAND = 0x27;
-   delay(1000);
-
-   sound_wait();
-   SOUND_COMMAND = 0x27;
-   delay(1000);
-
-   sound_wait();
-   SOUND_COMMAND = 0x26;
-   delay(1000);
-
-   sound_wait();
-   SOUND_COMMAND = 0x28;
-   delay(1000);
-
-   sound_wait();
-   SOUND_COMMAND = 0x2e;
-   delay(1000);
-#endif
-
 #endif
 }
-
-
-
-
-void sound_test(void) {
-   const uint8_t a[] = {
-      COIN_DROP_MUSIC,
-      HIGH_SCORE_MUSIC,
-      IMPULSE,
-      IMPULSE_END,
-      WARP,
-      WARP_END,
-      RED_ALERT,
-      RED_ALERT_END,
-      PHASER,
-      PHOTON,
-      TARGETING,
-      DENY,
-      SHIELD_HIT,
-      ENTERPRISE_HIT,
-      ENTERPRISE_EXPLOSION,
-      KLINGON_EXPLOSION,
-      DOCK,
-      STARBASE_HIT,
-      STARBASE_RED,
-      WARP_SUCK,
-      WARP_SUCK_END,
-      SAUCER_EXIT,
-      SAUCER_EXIT_END,
-      STARBASE_EXPLOSION,
-      SMALL_BONUS,
-      LARGE_BONUS,
-      STARBASE_INTRO,
-      KLINGON_INTRO,
-      ENTERPRISE_INTRO,
-      PLAYER_CHANGE,
-      KLINGON_FIRE,
-      NOMAD_MOTION,
-      NOMAD_MOTION_END,
-      NOMAD_STOPPED,
-      NOMAD_STOPPED_END,
-   };
-   for (uint8_t i=0; i<sizeof(a); i++) {
-      uint8_t s = a[i];
-
-      // for MUSIC we a different 2k loaded into the back half of the 8035
-      if (s==COIN_DROP_MUSIC) {
-         SOUND_COMMAND = 0xFF; // assert RAM LOAD latch
-         memcpy( (uint8_t*)USB_RAM+USB_ROM_SZ_B, (uint8_t*)USB_ROM_B, USB_ROM_SZ_B );
-         SOUND_COMMAND = 0x7F; 
-      }
-      // reload normal effects into the back half of the 8035
-      if (s==IMPULSE) {
-         SOUND_COMMAND = 0xFF; // assert RAM LOAD latch
-         memcpy( (uint8_t*)USB_RAM+USB_ROM_SZ_B, (uint8_t*)USB_ROM_A+USB_ROM_SZ_B, USB_ROM_SZ_B );
-         SOUND_COMMAND = 0x7F; 
-      }
-
-      sound_wait();
-      SOUND_COMMAND = s;
-      switch (s) {
-         case ENTERPRISE_INTRO:
-         case PLAYER_CHANGE:
-            delay(3000);
-            break;
-         case COIN_DROP_MUSIC: 
-            delay(5000);
-            break;
-         case HIGH_SCORE_MUSIC:
-            delay(13000);
-            break;
-         case IMPULSE_END:
-         case WARP_END:
-         case RED_ALERT_END:
-         case WARP_SUCK_END: //SAUCER_EXIT_END
-         case NOMAD_MOTION_END: //NOMAD_STOPPED_END
-            delay(500);
-            break;
-         default:
-            delay(1000);
-            break;
-      }
-   }
-}
-
 
 
 static void say(uint8_t i) {
@@ -306,26 +117,6 @@ static void say(uint8_t i) {
    // but unclear how to receive interrupt on complete of phrase
    delay( 750 );
    SPEECH_COMMAND = NO_PHRASE;
-}
-
-static void speech_0to9(uint8_t v) {
-   if ( v <= 9 ) {
-      say( ZERO + v);
-   }
-}
-
-static void say8(uint8_t v) {
-   uint8_t r = v; // remainder
-   uint8_t d0 = divideBy100( &r ); 
-   uint8_t d1 = divideBy10( &r );
-   uint8_t d2 = r;
-   if ( d0 ) {
-      speech_0to9( d0 );
-   }
-   if ( d1 || d0 ) {
-      speech_0to9( d1 );
-   }
-   speech_0to9( d2 );
 }
 
 
@@ -703,12 +494,12 @@ static void vector_init(void) {
 
 
 static uint16_t spinner_vector_angle(void) {
-   PORT_370 = 0xFE; // switch io expander to spinner
+   PORT_370 = SELECT_SPINNER;
    delay(1);
    uint8_t value = PORT_374;
    bool dir = value & 0x01;
    value = value >> 1;
-   PORT_370 = 0xFF; // switch io expander to buttons
+   PORT_370 = SELECT_BUTTONS;
    delay(1);
 
    static uint16_t angle = 0;
@@ -738,6 +529,67 @@ static uint16_t spinner_vector_angle(void) {
     return angle;
 }
 
+static void timer_interrupt_4Hz(void) {
+
+   switch( game_state ) {
+      case game_state_boot:
+         break;
+
+      case game_state_attract:
+         break;
+
+      case game_state_play: {
+         if ( system_tick & BIT(0) ) {
+            return;
+         }
+         // simple break beat
+         const uint8_t track0[] = { BASE_DRUM,          0,  SNARE_DRUM,         0,
+                                    BASE_DRUM,  BASE_DRUM,  SNARE_DRUM,         0, 
+                                    BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
+                                            0,  BASE_DRUM,  SNARE_DRUM,         0 };
+
+         // // more complex break beat
+         const uint8_t track1[] = { BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
+                                    BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM, 
+                                    BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
+                                    BASE_DRUM, SNARE_DRUM,  SNARE_DRUM, BASE_DRUM };
+         static uint8_t ix = 0;
+         if ( sound_track == 0 ) {
+            SOUND_COMMAND = track0[ ix ];
+         } else {
+            SOUND_COMMAND = SNARE_DRUM;
+            if (ix==0 || ix==4 || ix==8 || ix==12) {
+               if (sound_track) {
+                  sound_track--;
+               }
+            }
+         }
+         ix++;
+         if (ix>=sizeof(track0)) {
+            ix = 0;
+         }
+         break; }
+
+      case game_state_highscore: {
+         // new order blue monday
+         const uint8_t track[]  = { BASE_DRUM,         0,           0,         0,
+                                    BASE_DRUM,         0,           0,         0,
+                                    BASE_DRUM,         0,           0,         0,
+                                    BASE_DRUM,         0,           0,         0,
+                                    BASE_DRUM,         0,           0,         0,
+                                    BASE_DRUM,         0,           0,         0,
+                                    BASE_DRUM, BASE_DRUM, BASE_DRUM, BASE_DRUM,
+                                    BASE_DRUM, BASE_DRUM, BASE_DRUM, BASE_DRUM };
+         static uint8_t ix = 0;
+         SOUND_COMMAND = track[ ix ];
+         ix++;
+         if (ix>=sizeof(track)) ix = 0;
+         break; }
+
+      case game_state_test:
+         break;
+   }
+}
 
 static uint16_t flipCubeX( uint16_t x ) {
    if ( x < 1024 ) {
@@ -808,7 +660,7 @@ static inline uint8_t quadrant( uint16_t x, uint16_t y ) {
    }
 }
 
-static void enableSymbol( uint8_t sid, uint16_t x, uint16_t y, uint16_t sega_angle, uint8_t scale ) {
+void enableSymbol( uint8_t sid, uint16_t x, uint16_t y, uint16_t sega_angle, uint8_t scale ) {
    uint16_t *p = &symbols[ SFIELD_X_L(sid) ];
    if ( x != 0xFFFF ) p[0] = x;
    if ( y != 0xFFFF ) p[1] = y;
@@ -1064,22 +916,13 @@ static bool drawMissle(uint8_t *dist, int16_t *x, int16_t *y) {
 }
 
 
-
-typedef enum {
-   game_state_boot,
-   game_state_attract,
-   game_state_play,
-   game_state_highscore,
-   game_state_test
-} game_state_t;
-
-
 static void beginAttract( void ) {
    // set font 'a' thru 'z' to brightest white for phosphor afterglow
-   colorize( fontAddress('a'), fontAddress('z')-fontAddress('a'), SEGA_COLOR_BRWHITE );
+   colorize( (uint8_t*)fontAddress('a'), fontAddress('z')-fontAddress('a'), SEGA_COLOR_BRWHITE );
    enableSymbol( S_DIG0, MIN_X-70, CENTER_Y, SEGA_ANGLE(0), 0xFE );
 
-   drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_BLUE, "insert coin" );
+   const char *s = "insert coin";
+   drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_BLUE, s );
 
    // disable all other symbols on screen
    symbols[ SFIELD_VISIBLE(S_DIG2) ] = SEGA_LAST;
@@ -1089,10 +932,10 @@ static void beginAttract( void ) {
 static void endAttract( void ) {
 
    // set font 'a' thru 'z' to regular white
-   colorize( fontAddress('a'), fontAddress('z')-fontAddress('a'), SEGA_COLOR_WHITE );
+   colorize( (uint8_t*)fontAddress('a'), fontAddress('z')-fontAddress('a'), SEGA_COLOR_WHITE );
 
    // set numbers '0' thru '9' to pink
-   colorize( fontAddress('0'), fontAddress('9')-fontAddress('0'), SEGA_COLOR_MAGENTA );
+   colorize( (uint8_t*)fontAddress('0'), fontAddress('9')-fontAddress('0'), SEGA_COLOR_MAGENTA );
 
    // TODO: should restore positions and scales only (not make visible)
    enableSymbol( S_DIG0, CENTER_X-40, MIN_Y+30, SEGA_ANGLE(0), 0x40 );
@@ -1105,12 +948,25 @@ static void endAttract( void ) {
 static bool drawAttract( void ) {
    static uint16_t last_tick = 0;
    static uint8_t ix = 0;
-   const char str[] = "attack vector";
+   const char *str = "attack vektor";
+   const char *s = "press start";
 
-   uint8_t buttons = PORT_374;
-   if ( (buttons & BUTTON_PLAYER_1) ) {
-      return true;
+
+   uint16_t coin_counter = _coin_counter;
+   if ( coin_counter ) {
+      static uint8_t last_coin_counter = 0xff;
+      if ( coin_counter != last_coin_counter ) {
+         last_coin_counter = coin_counter;
+         if ( coin_counter ) {
+            drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_GREEN, s);
+         }
+      }
+      if ( (PORT_374 & BUTTON_PLAYER_1) ) {
+         _coin_counter--;
+         return true;
+      }
    }
+
 
 #if 1
    // wait for XY redraw
@@ -1132,7 +988,7 @@ static bool drawAttract( void ) {
          symbols[ SFIELD_VISIBLE(S_DIG0) ] = SEGA_VISIBLE;
       }
       ix++;
-      if (ix == sizeof(str)) {
+      if (ix > strlen(str)) {
          symbols[ SFIELD_VISIBLE(S_DIG0) ] = 0;
          p[0] = MIN_X - 70;
          ix = 0;
@@ -1240,18 +1096,21 @@ static bool drawPlay(void) {
       static int8_t ex[3] = {0,};
       static int8_t ey[3] = {0,};
 
+      static uint16_t *chopper_xy = &symbols[ SFIELD_X_L(S_CHOPPER) ];
       int16_t x,y = 0;
       if ( symbols[ SFIELD_VISIBLE(S_MISSLE) ] && drawMissle( &missle, &x, &y ) ) {
          uint16_t x0 = x-(HITBOX_SZ/2);
          uint16_t x1 = x+(HITBOX_SZ/2);
          uint16_t y0 = y-(HITBOX_SZ/2);
          uint16_t y1 = y+(HITBOX_SZ/2);
-         static uint16_t *chopper_xy = &symbols[ SFIELD_X_L(S_CHOPPER) ];
          if ( chopper_xy[0] > x0 && chopper_xy[0] < x1 && chopper_xy[1] > y0 && chopper_xy[1] < y1 ) {
 
+            score++;
             symbols[ SFIELD_VISIBLE(S_MISSLE) ] = 0;
             symbols[ SFIELD_VISIBLE(S_CHOPPER) ] = 0;
             symbols[ SFIELD_VISIBLE(S_BLADE) ] = 0;
+
+            sound_track = 2;
 
             enableSymbol( S_EXPLODE0, x, y, SEGA_ANGLE(0), 0x60 );
             enableSymbol( S_EXPLODE1, x, y, SEGA_ANGLE(0), 0x30 );
@@ -1265,8 +1124,6 @@ static bool drawPlay(void) {
                ey[i] = sy - flight_ey;
             }
          }
-
-         enableSymbol( S_BOX, x, y, SEGA_ANGLE(0), 0xFF );
       }
 
       if ( symbols[ SFIELD_VISIBLE(S_EXPLODE0) ] == SEGA_VISIBLE ) {
@@ -1290,6 +1147,19 @@ static bool drawPlay(void) {
       }
 
       if ( symbols[ SFIELD_VISIBLE(S_CHOPPER) ] == SEGA_VISIBLE ) {
+
+         uint16_t x0 = CENTER_X-(HITBOX_SZ/2);
+         uint16_t x1 = CENTER_X+(HITBOX_SZ/2);
+         uint16_t y0 = CENTER_Y-(HITBOX_SZ/2);
+         uint16_t y1 = CENTER_Y+(HITBOX_SZ/2);
+         if ( chopper_xy[0] > x0 && chopper_xy[0] < x1 && chopper_xy[1] > y0 && chopper_xy[1] < y1 ) {
+            symbols[ SFIELD_VISIBLE(S_FLAME) ] = 0;
+            symbols[ SFIELD_VISIBLE(S_MISSLE) ] = 0;
+            enableSymbol( S_EXPLODE0, CENTER_X, CENTER_Y, SEGA_ANGLE(0), 0x60 );
+            enableSymbol( S_EXPLODE1, CENTER_X, CENTER_Y, SEGA_ANGLE(0), 0x30 );
+            SOUND_COMMAND = TANK_EXPLODE;
+            return true; // game over
+         }
          if ( frame ) {
             drawChopper();
          }
@@ -1354,58 +1224,63 @@ static bool drawPlay(void) {
       return false;
 }
 
+static bool drawGameOver(void) {
+   static uint16_t last_tick = 0;
+   uint8_t frame = system_tick - last_tick;
+   last_tick = system_tick;
 
-static game_state_t game_state = game_state_boot;
+   // if ( !frame ) return false;
+   delay(10);
 
+   static int16_t x0,y0;
+   static int16_t x1,y1;
+   static bool init = true;
+   if ( init ) {
+      init = false;
+      if ( score <= high_score ) {
+         const char *s = "game over";
+         drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_RED, s );
+      }  else {
+         const char *s = "high score";
+         drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_RED, s );
+      }
+      colorize( (uint8_t*)V_ADDR(V_LINE), V_ADDR(V_LAST)-V_ADDR(V_LINE), SEGA_COLOR_GRAY );
 
+      colorize( (uint8_t*)V_ADDR(V_EXPLODE0), 0, SEGA_COLOR_YELLOW );
 
-static void timer_interrupt_4Hz(void) {
-
-   switch( game_state ) {
-      case game_state_boot:
-         break;
-
-      case game_state_attract:
-         break;
-
-      case game_state_play: {
-         // simple break beat
-         const uint8_t track[]  = { BASE_DRUM,          0,  SNARE_DRUM,         0,
-                                    BASE_DRUM,  BASE_DRUM,  SNARE_DRUM,         0, 
-                                    BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
-                                            0,  BASE_DRUM,  SNARE_DRUM,         0 };
-
-         // // more complex break beat
-         // const uint8_t track[]  = { BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
-         //                            BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM, 
-         //                            BASE_DRUM,          0,  SNARE_DRUM, BASE_DRUM,
-         //                            BASE_DRUM, SNARE_DRUM,  SNARE_DRUM, BASE_DRUM };
-         static uint8_t ix = 0;
-         SOUND_COMMAND = track[ ix ];
-         ix++;
-         if (ix>=sizeof(track)) ix = 0;
-         break; }
-
-      case game_state_highscore: {
-         // new order blue monday
-         const uint8_t track[]  = { BASE_DRUM,         0,           0,         0,
-                                    BASE_DRUM,         0,           0,         0,
-                                    BASE_DRUM,         0,           0,         0,
-                                    BASE_DRUM,         0,           0,         0,
-                                    BASE_DRUM,         0,           0,         0,
-                                    BASE_DRUM,         0,           0,         0,
-                                    BASE_DRUM, BASE_DRUM, BASE_DRUM, BASE_DRUM,
-                                    BASE_DRUM, BASE_DRUM, BASE_DRUM, BASE_DRUM };
-         static uint8_t ix = 0;
-         SOUND_COMMAND = track[ ix ];
-         ix++;
-         if (ix>=sizeof(track)) ix = 0;
-         break; }
-
-      case game_state_test:
-         break;
+      // calculate x and y deltas from vector velocity
+      vectorPosition( randSegaAngle(), 5, &x0, &y0 );
+      vectorPosition( randSegaAngle(), 6, &x1, &y1 );
    }
+
+   rotateSymbol( S_TURRET, 7 );
+   rotateSymbol( S_BARREL, -5 );
+   rotateSymbol( S_EXPLODE0, 10 );
+   rotateSymbol( S_EXPLODE1, -20 );
+
+   moveSymbol( S_DIG1, 0, 1 );
+
+   moveSymbol( S_TURRET, x0, y0 );
+   moveSymbol( S_BARREL, x1, y1 );
+
+   if ( frame ) {
+      drawChopper();
+   }
+
+   sizeSymbol( S_EXPLODE0, 2 );
+   sizeSymbol( S_EXPLODE1, 1 );
+
+   if ( symbols[ SFIELD_VISIBLE(S_CHOPPER) ] == 0 ) {
+      colorize( (uint8_t*)V_ADDR(V_EXPLODE0), 0, SEGA_COLOR_GRAY );
+      colorize( (uint8_t*)V_ADDR(V_EXPLODE1), 0, SEGA_COLOR_GRAY );
+      init = true;
+      return true;
+   }
+   return false;
 }
+
+
+
 
 
 static void super_loop(void) {
@@ -1426,8 +1301,19 @@ static void super_loop(void) {
             break;
 
          case game_state_play:
+            drawScore( score );
             if ( drawPlay() ) {
-               game_state = game_state_attract;
+               game_state = game_state_game_over;
+            }
+            break;
+
+         case game_state_game_over:
+            if ( drawGameOver() ) {
+               if ( score <= high_score ) {
+                  game_state = game_state_attract;
+               } else {
+                  game_state = game_state_highscore;
+               }
             }
             break;
 
@@ -1461,7 +1347,7 @@ static void init(void) {
    XY_INIT = 0x04;
 
    PORT_371 = 0x00;
-   PORT_370 = 0xFF; // switch io expander from spinner to buttons
+   PORT_370 = SELECT_BUTTONS;
 }
 
 
@@ -1477,10 +1363,6 @@ void main(void) {
 
    __asm__("ei");
    __asm__("halt");
-
-#ifdef ENABLE_UART
-   send_uart_data("boot\r\n",6);
-#endif
 
    for (;;) {
       super_loop();

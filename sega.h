@@ -5,7 +5,19 @@
 #include <stdbool.h>
 #include <string.h>
 
+
 // #define ENABLE_UART
+
+
+#define BIT(n)             (1<<(n))
+#define MIN(a,b)           (((a)<(b))?(a):(b))
+#define MAX(a,b)           (((a)>(b))?(a):(b))
+#define LSB(x)             (uint8_t)((uint16_t)(x) & 0xFF)
+#define MSB(x)             (uint8_t)(((uint16_t)(x) >> 8) & 0xFF)
+#define LE(x)              LSB(x), MSB(x)
+
+
+
 
 ////////////////////////////////////
 // sega g80 memory map
@@ -29,7 +41,7 @@
 
 #define VECTOR_RAM      (0xE000) // 4k ram (xy board)
 #define VECTOR_RAM_SZ   (4*1024)
-#define SYMBOLS_SZ      (0x180)
+#define SYMBOLS_SZ      (0x160)
 ////////////////////////////////////
 
 // Test button on CPU board asserts NMI
@@ -80,40 +92,19 @@ __sfr __at 0xfc PORT_374;
 // ELIMINATOR --->                                   |RotR Red |ThrustRed|Fire Red|
 // +---------+---------+---------+---------+---------+---------+---------+--------+
 // STAR TREK  --->     | WARP    | PHOTON  | PHASER  | IMPULSE | 2Player |1Player 
-#define BUTTON_PLAYER_1 (1<<0)
-#define BUTTON_PLAYER_2 (1<<1)
-#define BUTTON_THRUST   (1<<2)
-#define BUTTON_FIRE     (1<<3)
-#define BUTTON_PHOTON   (1<<4)
-#define BUTTON_WARP     (1<<5)
+#define BUTTON_PLAYER_1    BIT(0)
+#define BUTTON_PLAYER_2    BIT(1)
+#define BUTTON_THRUST      BIT(2)
+#define BUTTON_FIRE        BIT(3)
+#define BUTTON_PHOTON      BIT(4)
+#define BUTTON_WARP        BIT(5)
 
 __sfr __at 0xf8 PORT_370;
-   #define PORT_370_D7      0x80
-   #define PORT_370_D6      0x40
-   #define PORT_370_D5      0x20
-   #define PORT_370_D4      0x10
-   #define PORT_370_D3      0x08
-   #define PORT_370_D2      0x04
-   #define PORT_370_D1      0x02
-   #define PORT_370_D0      0x01
-   #define PORT_SEL         PORT_370_D0
+#define SELECT_SPINNER     0xFE
+#define SELECT_BUTTONS     0xFF
+#define IO_COIN_N          BIT(5)
 
 __sfr __at 0xf9 PORT_371;
-   #define PORT_371_D7      0x80
-   #define PORT_371_D6      0x40
-   #define PORT_371_D5      0x20
-   #define PORT_371_D4      0x10
-   #define PORT_371_D3      0x08
-   #define PORT_371_D2      0x04
-   #define PORT_371_D1      0x02
-   #define PORT_371_D0      0x01
-   #define COIN_COUNTER_A   PORT_371_D7
-   #define COIN_COUNTER_B   PORT_371_D6
-
-#define PORT_LED            PORT_370
-#define LED_1               PORT_370_D7
-#define LED_2               PORT_370_D6
-
 
 __sfr __at 0xbe XY_MULTIPLIER;
 __sfr __at 0xbd XY_MULTIPLICAND;
@@ -125,14 +116,8 @@ __sfr __at 0x39 VOTRAX_COMMAND;
 __sfr __at 0x3f SOUND_COMMAND;
 
 
+// 0 = 0 deg, 2^10 (1024) = 360 deg
 #define SEGA_ANGLE(deg)    ((uint16_t)(((float)(deg))*2.845))
-#define divideBy3(x)       (((x)>>2)+((x)>>4))
-
-#define MIN(a,b)           (((a)<(b))?(a):(b))
-#define MAX(a,b)           (((a)>(b))?(a):(b))
-#define LSB(x)             (uint8_t)((uint16_t)(x) & 0xFF)
-#define MSB(x)             (uint8_t)(((uint16_t)(x) >> 8) & 0xFF)
-#define LE(x)              LSB(x), MSB(x)
 
 #define V_ADDR(x) (VECTOR_RAM+SYMBOLS_SZ+(x*4))
 #define S_ADDR(x) (VECTOR_RAM+(x*10))
@@ -204,8 +189,21 @@ typedef struct {
 #define BASE_DRUM    0x2E
 #define SNARE_DRUM   0x1E
 #define HAT_DRUM     0x0E
+#define CHOPPER_EXPLODE 0x1C
 #define TANK_MOVE    0x00
 #define TANK_FIRE    0x1A
+#define TANK_EXPLODE 0x16
+#define COIN_DROP    0x24
+
+
+typedef enum {
+   game_state_boot,
+   game_state_attract,
+   game_state_play,
+   game_state_game_over,
+   game_state_highscore,
+   game_state_test
+} game_state_t;
 
 
 typedef enum {
@@ -282,8 +280,8 @@ typedef enum {
 #define FONT_STRING 0x01
 uint16_t installFonts( uint16_t addr );
 uint16_t fontAddress( char c );
-void drawString( uint8_t *symbol, uint16_t x, uint16_t y, uint8_t scale, uint8_t color, char *str );
-void colorize( uint16_t addr, uint16_t len, uint8_t color );
+void drawString( uint8_t *symbol, uint16_t x, uint16_t y, uint8_t scale, uint8_t color, const char *str );
+void colorize( uint8_t *vector, uint16_t len, uint8_t color );
 void enableSymbol( uint8_t sid, uint16_t x, uint16_t y, uint16_t sega_angle, uint8_t scale );
 
 ////////////////////////////////////
@@ -295,6 +293,8 @@ uint8_t divideBy10(uint8_t *value);
 uint8_t divideBy100(uint8_t *value);
 int8_t sinlut(uint16_t sega_angle, bool *negsign);
 uint8_t coslut(uint16_t sega_angle, bool *negsign);
+#define randSegaAngle()    (rand() << 2)
+#define divideBy3(x)       (((x)>>2)+((x)>>4))
 
 
 #endif //_SEGA_H_
