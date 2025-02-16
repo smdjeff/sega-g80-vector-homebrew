@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 import argparse
 import struct
 import turtle
@@ -5,16 +7,18 @@ import canvasvg
 import os,sys,time
 from collections import namedtuple
 
-def intlist(arg):
-    return list(map(int, arg.split(',')))
+def hex_int(x):
+    return int(x, 16)
 
 parser = argparse.ArgumentParser(
-                    prog='sega-vectors',
-                    description='Dump vector symbols from Sega G80 vector ROM')
+                    prog='sega2svg',
+                    description='Translate Sega G80 vector symbols to SVG',
+ formatter_class=argparse.ArgumentDefaultsHelpFormatter
+)
 parser.add_argument('filename')
-parser.add_argument('-r', '--render', type=intlist, help='render vector symbol n to screen')
-parser.add_argument('-w', '--write', action='store_true', help='render vector symbols to disk as svg')
-parser.add_argument('-s', '--search', action='store_true', help='intensive search for vector symbols')
+parser.add_argument('-r', '--render', type=hex_int, help='render vector symbol at address')
+parser.add_argument('-w', '--write', action='store_true', help='write vector symbols to disk as svg')
+parser.add_argument('-s', '--search', nargs='?', const=3, type=int, help='search ROM for vector symbols')
 parser.add_argument('-d', '--debug', action='store_true', help='print debug information')
 args = parser.parse_args()
 
@@ -181,6 +185,9 @@ if ( args.render or args.write ):
 
 
 addrs = []
+if ( args.render ):
+    addrs.append( args.render )
+
 if (args.search):
     symbol_count = 0
     addr = 0x0000
@@ -190,7 +197,7 @@ if (args.search):
         if (args.debug):
             print()
         # results in some false positives, but good enough
-        if vectors and ((last_was_good and len(vectors)>1) or (not last_was_good and len(vectors)>3)):
+        if vectors and ((last_was_good and len(vectors)>1) or (not last_was_good and len(vectors)>args.search)):
             symbol_count += 1
             last_was_good = True
             addrs.append( addr )
@@ -206,17 +213,15 @@ if (args.search):
     print()
     print(f"total symbols:{symbol_count}")
 
-ix = 0
 for addr in addrs:
         vectors = decodeSegaSymbol( addr )
         if vectors and len(vectors):
             print(f"{addr:0>4x} {len(vectors)} vectors")
             if len(vectors) > 2:
-                ix += 1
                 if ( args.write ):
                     drawSegaSymbol( vectors, 0 )
                     canvasvg.saveall( f"dump/{addr:0>4x}.svg", turtle.getcanvas() )
-                if ( args.render and ix in args.render ):
+                if ( args.render ):
                     drawSegaSymbol( vectors, 10 )
         else:
             print(f"{addr:0>4x}  no vector data")
