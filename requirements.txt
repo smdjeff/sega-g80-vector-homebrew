@@ -1,0 +1,4 @@
+canvasvg==1.0.5
+pip==25.0
+setuptools==75.8.0
+svg.path==6.3
