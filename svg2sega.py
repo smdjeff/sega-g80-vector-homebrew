@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(
  formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
 parser.add_argument('filename')
-# parser.add_argument('-r', '--render', action='store_true', help='render vector symbol to screen')
+parser.add_argument('-s', '--scale', nargs='?', const=1.0, type=float, default=1.0, help='scale image up or down by percentage')
 # parser.add_argument('-w', '--write', action='store_true', help='write svg as sega vector symbol')
 # parser.add_argument('-d', '--debug', action='store_true', help='print debug information')
 args = parser.parse_args()
@@ -26,6 +26,7 @@ args = parser.parse_args()
 
 def calculate_angle_distance(x0, y0, x1, y1):
     distance = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
+    distance *= float(args.scale)
     angle_radians = math.atan2(y1 - y0, x1 - x0)
     angle = math.degrees(angle_radians)
     if angle < 0:
@@ -63,7 +64,7 @@ def polyline_to_path(polyline):
 def printSegaVector( sega_color, x0, y0, x1, y1 ):
     distance, angle = calculate_angle_distance(x0, y0, x1, y1)
     sega_size = distance
-    sega_angle = int((angle+90) * 1024 / 360)
+    sega_angle = int(angle * 1024 / 360)
     sega_angle_lsb = sega_angle & 0xFF
     sega_angle_msb = (sega_angle >> 8) & 0xFF
     print("   0x{0:02x}, 0x{1:02x}, 0x{2:02x}, 0x{3:02x},".format(sega_color, sega_size, sega_angle_lsb, sega_angle_msb))
