@@ -1269,7 +1269,7 @@ static bool drawPlay(void) {
 
 static bool drawGameOver(void) {
 
-   delay(10);
+   delay(5);
 
    static int16_t x0,y0;
    static int16_t x1,y1;
@@ -1283,13 +1283,12 @@ static bool drawGameOver(void) {
          const char *s = "high score";
          drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_RED, s );
       }
-      colorize( (uint8_t*)V_ADDR(V_LINE), V_ADDR(V_LAST)-V_ADDR(V_LINE), SEGA_COLOR_GRAY );
-      colorize( (uint8_t*)V_ADDR(V_EXPLODE0), 0, SEGA_COLOR_YELLOW );
+      colorize( (uint8_t*)V_ADDR(V_LINE), V_ADDR(V_BOX)-V_ADDR(V_LINE), SEGA_COLOR_GRAY );
       colorize( (uint8_t*)V_ADDR(V_SMOKE), 0, SEGA_COLOR_GRAY );
 
       // calculate x and y deltas from vector velocity
-      vectorPosition( randSegaAngle(), 5, &x0, &y0 );
-      vectorPosition( randSegaAngle(), 6, &x1, &y1 );
+      vectorPosition( randSegaAngle(), 3, &x0, &y0 );
+      vectorPosition( randSegaAngle(), 4, &x1, &y1 );
    }
 
    rotateSymbol( S_TURRET, 7 );
