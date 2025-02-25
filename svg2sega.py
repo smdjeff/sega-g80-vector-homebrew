@@ -52,10 +52,40 @@ def rgb_to_2bit(r, g, b):
     b = round(b / 85)
     return (r<<4) | (g<<2) | b
 
+def apply_rotation(x, y, cx, cy, angle_deg):
+    angle_rad = math.radians(angle_deg)
+    cos_theta = math.cos(angle_rad)
+    sin_theta = math.sin(angle_rad)
+    x_new = cx + (x - cx) * cos_theta - (y - cy) * sin_theta
+    y_new = cy + (x - cx) * sin_theta + (y - cy) * cos_theta
+    return x_new, y_new
+
+def parse_transform(transform_str):
+    cx, cy, angle = 0, 0, 0
+    if "translate" in transform_str and "rotate" in transform_str:
+        translate_part = transform_str.split("translate(")[1].split(")")[0]
+        cx, cy = map(float, translate_part.split(","))
+        rotate_part = transform_str.split("rotate(")[1].split(")")[0]
+        angle = float(rotate_part.split()[0]) 
+    return cx, cy, angle
+
+
 def polyline_to_path(polyline):
     points = polyline.getAttribute("points").strip()
     if not points:
         return None
+
+    transform = polyline.getAttribute("transform")
+    cx, cy, angle = parse_transform(transform)  # Get transform values
+    if angle != 0:
+        new_coords = []
+        for coord in points.split():
+            x, y = map(float, coord.split(","))
+            if angle != 0:  # Apply rotation only if an angle is provided
+                x, y = apply_rotation(x, y, cx, cy, angle)
+            new_coords.append(f"{x},{y}")
+        coords = new_coords
+
     coords = points.split()
     d = f"M {coords[0]} {coords[1]}"
     for i in range(2, len(coords), 2):
@@ -79,6 +109,16 @@ def polygon_to_path(polygon):
         print(f"polygon_to_path: {d}")
     return d
 
+def get_svg_center(doc):
+    svg = doc.getElementsByTagName("svg")[0]
+    width = svg.getAttribute("width")
+    height = svg.getAttribute("height")
+    # Convert to float (handling cases like "100px")
+    width = float(width.replace("px", "")) if width else 0
+    height = float(height.replace("px", "")) if height else 0
+    center_x = width / 2
+    center_y = height / 2
+    return center_x, center_y
 
 def printSegaVector( sega_color, x0, y0, x1, y1 ):
     distance, angle = calculate_angle_distance(x0, y0, x1, y1)
@@ -111,7 +151,8 @@ skk.pendown()
 
 print('uint8_t sega_vector[] = {')
 
-sz = 0
+sz = 1
+x3, y3 = get_svg_center(doc)
 
 for element in list(paths) + list(polylines) + list(polygons):
 
@@ -139,7 +180,6 @@ for element in list(paths) + list(polylines) + list(polygons):
 
     parsed_path = parse_path(d)
 
-    x3, y3 = 0, 0
     for segment in parsed_path:
         if isinstance(segment, CubicBezier):
             segment = Line(segment.start, segment.end)

@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="54px" height="58px" viewBox="0 0 54 58" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg width="164px" height="163px" viewBox="0 0 164 163" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <!-- Generator: Sketch 51.3 (57544) - http://www.bohemiancoding.com/sketch -->
     <title>Group 1</title>
     <desc>Created with Sketch.</desc>
     <defs></defs>
     <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="square">
-        <g id="Group-1" transform="translate(1.000000, 0.000000)">
-            <polygon id="Line" stroke="#F5A623" points="21.4377365 0.259658813 18.6178284 20.1077576 0 20.1077576 11.1527405 31.9831009 0 42.5488586 16.3749237 44.1923599 20.3566284 57.4303589 29.4959946 45.523468 44.4767151 51.5728149 41.9007797 36.7352219 52.2526398 29.649971 42.7212677 24.4970398 44.4767151 8.38920593 33.6147766 13.0036621"></polygon>
-            <polygon id="Line" stroke="#FFFFFF" points="23.810791 10.5405121 21.2084394 25.1854443 10.697464 24.129921 16.0340881 32.2890167 9 39.9009533 18.3830414 39.9009533 21.2084394 47.9140778 28.8938904 39.9009533 38.4455643 44.580658 37.0140087 36.3520212 42.5867767 30.099924 37.0140087 28.0636686 37.0140087 16.7834167 31.0425258 20.5270106"></polygon>
+        <g id="Group-1">
+            <polygon id="Line" stroke="#F8E71C" points="78.3783875 20.9985046 78.3783875 65.7333679 39.5550995 67.8787231 61.7707571 92.3612332 31.3266296 123.518097 69.0745239 119.05598 79.7372479 148 102.22821 119.05598 135.306885 141.670181 124.636169 103.910416 141.815186 88.1665649 121.792605 76.7554626 135.306885 39.5713501 106.225128 56.462616"></polygon>
+            <polygon id="Line" stroke="#F5A623" points="88.4267578 50.1279564 86.7941284 72.8450546 64.8653643 74.9392833 73.5640869 93.032959 57.0469666 110.716141 74.8653259 114.031982 83.9584656 126.74295 97.3648987 110.716141 115.528931 117.448883 111.768616 98.6601028 125.454773 90.4428406 111.768616 80.9436874 118.218323 62.9271088 100.540405 64.4023895"></polygon>
+            <path d="M49.5,34.5 L40.5,26.5" id="Line-2" stroke="#FFFFFF" fill="#D8D8D8"></path>
+            <path d="M163.5,114.5 L153.5,112.5" id="Line-2" stroke="#FFFFFF" fill="#D8D8D8"></path>
+            <path d="M20.5,98.5 L0.5,102.5" id="Line-2" stroke="#FFFFFF" fill="#D8D8D8"></path>
+            <path d="M113.5,18.5 L118.5,0.5" id="Line-2" stroke="#FFFFFF"></path>
+            <path d="M110.5,157.5 L106.5,145.5" id="Line-2" stroke="#FFFFFF" fill="#D8D8D8"></path>
+            <path d="M116,30.3433224 L126,12.3433224" id="Line-2" stroke="#F8E71C"></path>
+            <path d="M149,63.3433224 L161.5,55.5" id="Line-2" stroke="#F8E71C"></path>
+            <path d="M48,162.343322 L58,144.343322" id="Line-2" stroke="#F8E71C"></path>
         </g>
     </g>
 </svg>

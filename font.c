@@ -136,7 +136,7 @@ uint16_t installFonts( uint16_t addr ) {
 
      font_addr_string = addr;
 
-     return 0;
+     return addr;
 }
 
 uint16_t fontAddress( char c ) {
@@ -225,6 +225,11 @@ void drawString( uint8_t *sym, uint16_t x, uint16_t y, uint8_t scale, uint8_t co
       uint8_t *in = (uint8_t*)fontAddress( ch );
       if ( in ) {
            uint16_t sz = vectorSize( in );
+
+           if ( (uint16_t)&vec[v_sz] + sz + 8 >= VECTOR_RAM_END ) {
+               break;
+           }
+
            memcpy( &vec[v_sz], in, sz );
            v_sz += sz;
            vec[v_sz - 4] &= ~ SEGA_LAST;
