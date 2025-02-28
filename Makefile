@@ -20,16 +20,16 @@ clean:
 
 gamerom: prereq bootrom
 	@echo "building 32k rom at 0x800 for use with sega-boot-rom in cpu rom socket"
-	zcc +z80 --list -vn -SO3 -compiler=sdcc -startup=1 font.c math.c main.c -o $@ -create-app -DEMBEDDED_USB -DENABLE_BOOTROM -Cz"--rombase=0x0800 --romsize=24576"
+	zcc +z80 --list -m -vn -SO3 -compiler=sdcc -startup=1 font.c math.c main.c usb.c -o $@ -create-app -DENABLE_BOOTROM -Cz"--rombase=0x0800 --romsize=30720"
 	@mv $@* build/ 2>/dev/null || true
 	@mv *.lis build/ 2>/dev/null || true
-	@printf 'code size: ' && stat -f '%z' build/$@_CODE.bin
+	@printf 'ROM usage: ' && stat -f '%z' build/$@_CODE.bin
+	@printf 'RAM usage: ' && echo "$$(stat -f '%z' build/$@_BSS.bin) + $$(stat -f '%z' build/$@_DATA.bin)" | bc
 	@grep -q "/crt_page_zero_z80.inc:" build/$@.lis || (echo "ERROR crt_page_zero missing. please edit z80_crt_o.asm.m4" && exit 1)
 	@rm -f build/$@.bin
 	cat build/bootrom.bin >> build/$@.bin
 	cat build/$@.rom >> build/$@.bin
-	truncate -s 26K build/$@.bin
-	cat usbrom.bin >> build/$@.bin
+	truncate -s 32K build/$@.bin
 
 bootrom: prereq
 	z80asm bootrom.asm -o build/$@.bin

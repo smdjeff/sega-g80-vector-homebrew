@@ -99,14 +99,12 @@ static void vectorPosition( uint16_t sega_angle, uint16_t length, int16_t *x, in
 
 
 static void sound_init(void) {
+   extern const uint8_t usbrom_bin[];
    // copy main board ROMs into sound board's RAM 
    // so the 8035 can execute it
-#ifdef EMBEDDED_USB
-   // load 4k
    SOUND_COMMAND = 0xFF; // assert RAM LOAD latch
-   memcpy( (uint8_t*)USB_RAM, (uint8_t*)USB_ROM_A, USB_ROM_SZ_A );
+   memcpy( (uint8_t*)USB_RAM, usbrom_bin, (1024*4) );
    SOUND_COMMAND = 0x7F; 
-#endif
 }
 
 

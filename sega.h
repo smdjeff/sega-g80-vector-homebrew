@@ -27,12 +27,6 @@
 #define ROM_BOARD       (0x0800) // 46k rom board
 #define ROM_BOARD_SZ    (46*1024)
 
-// 6k image for the usb's 8035 (allocated at end of our image)
-#define USB_ROM_SZ_A   (4*1024)
-#define USB_ROM_SZ_B   (2*1024)
-#define USB_ROM_A      (0x6800)  // from 26k-32k address
-#define USB_ROM_B      (USB_ROM_A+USB_ROM_SZ_A)
-
 #define CPU_RAM         (0xC800) // 2k ram (cpu board)
 #define CPU_RAM_SZ      (2*1024)
 
