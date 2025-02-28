@@ -4,13 +4,30 @@
 #define STRINGIFY(x) #x
 #define TO_STRING(x) STRINGIFY(x)
 
-#define assert(x)  \
+
+#define assert(x) \
+     while ( !(x) ) { \
+          writeDebug( '!', __LINE__ ); \
+          uint8_t *halt = (uint8_t*)(0x0000); \
+          *halt = 1;\
+     };
+
+#define assert2(x)  \
      if ( !(x) ) { \
           const char *ass = __FILE__ ":" TO_STRING(__LINE__); \
           drawString( (uint8_t*)S_ADDR(1), CENTER_X, CENTER_Y, 0x40, SEGA_COLOR_YELLOW, ass ); \
      }
 
  
+ static void writeDebug( char c, uint16_t v ) {
+     uint8_t *mame = (uint8_t*)(0xd000);
+     *mame = 0xBE;
+     *mame = 0xEF;
+     *mame = c;
+     *mame = MSB(v);
+     *mame = LSB(v);
+}
+
 
 static void drawPort( void ) {
    uint8_t f8 = PORT_370;

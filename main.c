@@ -963,8 +963,10 @@ static void beginAttract( void ) {
    colorize( (uint8_t*)fontAddress('a'), fontAddress('z')-fontAddress('a'), SEGA_COLOR_BRWHITE );
    enableSymbol( S_DIG0, MIN_X-70, CENTER_Y, SEGA_ANGLE(0), 0xFE );
 
-   const char *s = "insert coin";
-   drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_BLUE, s );
+//   const char s[] = "insert coin0123456789"; // asserts addr > 0xEFFF
+//   const char s[] = "insert coin012345678";  // just fits
+   const char s[] = "insert coin";
+   drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_BLUE, s, sizeof(s)-1 );
 
    // disable all other symbols on screen
    symbols[ SFIELD_VISIBLE(S_DIG2) ] = SEGA_LAST;
@@ -990,8 +992,8 @@ static void endAttract( void ) {
 static bool drawAttract( void ) {
    static uint16_t last_tick = 0;
    static uint8_t ix = 0;
-   const char *str = "attack vektor";
-   const char *s = "press start";
+   const char str[] = "attack vektor";
+   const char s[] = "press start";
 
 
    uint16_t coin_counter = _coin_counter;
@@ -1000,7 +1002,7 @@ static bool drawAttract( void ) {
       if ( coin_counter != last_coin_counter ) {
          last_coin_counter = coin_counter;
          if ( coin_counter ) {
-            drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_GREEN, s);
+            drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_GREEN, s, sizeof(s)-1 );
          }
       }
       if ( (PORT_374 & BUTTON_PLAYER_1) ) {
@@ -1030,7 +1032,7 @@ static bool drawAttract( void ) {
          symbols[ SFIELD_VISIBLE(S_DIG0) ] = SEGA_VISIBLE;
       }
       ix++;
-      if (ix > strlen(str)) {
+      if (ix > sizeof(str)) {
          symbols[ SFIELD_VISIBLE(S_DIG0) ] = 0;
          p[0] = MIN_X - 70;
          ix = 0;
@@ -1275,14 +1277,15 @@ static bool drawGameOver(void) {
    if ( init ) {
       init = false;
       if ( score <= high_score ) {
-         const char *s = "game over";
-         drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_RED, s );
+         const char s[] = "game over";
+         drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_RED, s, sizeof(s)-1 );
       }  else {
-         const char *s = "high score";
-         drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_RED, s );
+         const char s[] = "high score";
+         drawString( (uint8_t*)S_ADDR(S_DIG1), CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_RED, s, sizeof(s)-1 );
       }
-      colorize( (uint8_t*)V_ADDR(V_LINE), V_ADDR(V_BOX)-V_ADDR(V_LINE), SEGA_COLOR_GRAY );
-      colorize( (uint8_t*)V_ADDR(V_SMOKE), 0, SEGA_COLOR_GRAY );
+      colorize( (uint8_t*)V_ADDR(V_LINE), V_ADDR(V_LAST)-V_ADDR(V_LINE), SEGA_COLOR_GRAY );
+      colorize( (uint8_t*)V_ADDR(V_EXPLODE0), V_ADDR(V_EXPLODE1)-V_ADDR(V_EXPLODE0), SEGA_COLOR_YELLOW );
+      colorize( (uint8_t*)V_ADDR(V_SMOKE), V_ADDR(V_LAST)-V_ADDR(V_SMOKE), SEGA_COLOR_GRAY );
 
       // calculate x and y deltas from vector velocity
       vectorPosition( randSegaAngle(), 3, &x0, &y0 );

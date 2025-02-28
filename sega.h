@@ -35,6 +35,7 @@
 
 #define VECTOR_RAM      (0xE000) // 4k ram (xy board)
 #define VECTOR_RAM_SZ   (4*1024)
+#define VECTOR_RAM_END  (VECTOR_RAM+VECTOR_RAM_SZ)
 #define SYMBOLS_SZ      (0x160)
 ////////////////////////////////////
 
@@ -111,21 +112,21 @@ __sfr __at 0x3f SOUND_COMMAND;
 
 
 // 0 = 0 deg, 2^10 (1024) = 360 deg
-#define SEGA_ANGLE(deg)    ((uint16_t)(((float)(deg))*2.845))
+#define SEGA_ANGLE(deg)    ((int16_t)(((float)(deg))*2.845))
 
 #define V_ADDR(x) (VECTOR_RAM+SYMBOLS_SZ+(x*4))
 #define S_ADDR(x) (VECTOR_RAM+(x*10))
 
 
 typedef struct {
-   uint8_t last   : 1;
-   uint8_t group  : 6;
-   uint8_t visible : 1;
-   uint16_t x;
+   uint8_t visible : 1;  // lsb
+   uint8_t group  : 6;   // user
+   uint8_t last   : 1;   // msb
+   uint16_t x;           // 0x000-0x7FF 10bit wrap, viewport is 0x200-0x600 with 0x400 center 
    uint16_t y;
    uint16_t vector_addr; // E000 - EFFF 4k Vector RAM
-   uint16_t rotation; // 10 bit angle of whole symbol
-   uint8_t scale; // 0x40 = 1/2, 0x80 = 1x, 0xff = 2x
+   uint16_t rotation;    // 0x7FF 10 bit angle of whole symbol
+   uint8_t scale;        // 0x40 = 1/2, 0x80 = 1x, 0xff = 2x
 } symbol_t; // 10 bytes
 
 #define SFIELD_VISIBLE(row) (((row)*10)+0)
@@ -140,11 +141,11 @@ typedef struct {
 #define SFIELD_SCALE(row)   (((row)*10)+9)
 
 typedef struct {
-   uint8_t last   : 1;
-   uint8_t red    : 2;
-   uint8_t green  : 2;
-   uint8_t blue    : 2;
    uint8_t visible : 1;
+   uint8_t blue    : 2;
+   uint8_t green  : 2;
+   uint8_t red    : 2;
+   uint8_t last   : 1;
    uint8_t length;   // unscaled size
    uint8_t angle;   // degrees
    uint8_t quadrant; // msb of 10 bit angle
@@ -167,6 +168,7 @@ typedef struct {
 #define SEGA_COLOR_YELLOW  (SEGA_COLOR_RED|SEGA_COLOR_GREEN)
 #define SEGA_COLOR_CYAN    (SEGA_COLOR_GREEN|SEGA_COLOR_BLUE)
 #define SEGA_COLOR_MAGENTA (SEGA_COLOR_RED|SEGA_COLOR_BLUE)
+#define SEGA_COLOR_ORANGE  (SEGA_COLOR_RED|SEGA_COLOR_GREEN1)
 #define SEGA_COLOR_BRWHITE (0x7E|SEGA_VISIBLE)
 #define SEGA_COLOR_WHITE   (0x54|SEGA_VISIBLE)
 #define SEGA_COLOR_GRAY    (0x2A|SEGA_VISIBLE)
@@ -274,7 +276,7 @@ typedef enum {
 #define FONT_STRING 0x01
 uint16_t installFonts( uint16_t addr );
 uint16_t fontAddress( char c );
-void drawString( uint8_t *symbol, uint16_t x, uint16_t y, uint8_t scale, uint8_t color, const char *str );
+void drawString( uint8_t *symbol, uint16_t x, uint16_t y, uint8_t scale, uint8_t color, const char *str, uint8_t len );
 void colorize( uint8_t *vector, uint16_t len, uint8_t color );
 void enableSymbol( uint8_t sid, uint16_t x, uint16_t y, uint16_t sega_angle, uint8_t scale );
 

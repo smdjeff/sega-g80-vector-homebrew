@@ -267,7 +267,7 @@ const uint8_t sin_table[] = {
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define LSB(x) (uint8_t)((uint16_t)(x) & 0xFF)
 #define MSB(x) (uint8_t)(((uint16_t)(x) >> 8) & 0xFF)
-#define SEGA_ANGLE(deg)    ((uint16_t)(((float)(deg))*2.845))
+#define SEGA_ANGLE(deg)    ((int16_t)(((float)(deg))*2.845))
 #define SEGA_ANGLE_F(deg)  (((float)(deg))*2.845)
 #define SCALE 255  // i.e. 1<<8 fixed point scaling for sin table
 

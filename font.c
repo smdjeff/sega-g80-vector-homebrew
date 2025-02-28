@@ -144,16 +144,20 @@ uint16_t fontAddress( char c ) {
    const uint16_t font_alpha[] = {
       0x0000,0x0018,0x0034,0x0044,0x005c,0x0074,0x0088,0x00a0,0x00b8,0x00d0,
       0x00e0,0x00f8,0x0104,0x0118,0x0128,0x013c,0x0150,0x016c,0x0188,0x01a0,
-      0x01b0,0x01c0,0x01cc,0x01e0,0x01f0,0x0208};
+      0x01b0,0x01c0,0x01cc,0x01e0,0x01f0,0x0208,0x0208+(4*4)};
 
    const uint16_t font_numeric[] = {
-      0x0000,0x0014,0x001C,0x0034,0x004C,0x0060,0x0078,0x008C,0x0098,0x00B4};
+      0x0000,0x0014,0x001C,0x0034,0x004C,0x0060,0x0078,0x008C,0x0098,0x00B4,0x00B4+(5*4)};
 
    if ( c>='0' && c<='9' ) return font_addr_numeric + font_numeric[ c-'0' ];
 
    if ( c>='a' && c<='z' ) return font_addr_alpha + font_alpha[ c-'a' ];
 
    return 0;
+}
+
+static inline uint16_t fontSize( char c ) {
+   return fontAddress( c + 1 ) - fontAddress( c );
 }
 
 // SEGA_ANGLE(90)
@@ -206,30 +210,20 @@ static uint8_t offset_y( char ch ) {
      return 0x00;
 }
 
-static uint16_t vectorSize( uint8_t *addr ) {
-     uint16_t i = 0;
-     do {
-          i += 4;
-     } while ( !(addr[i-4] & SEGA_LAST) );
-     return i;
-}
 
-void drawString( uint8_t *sym, uint16_t x, uint16_t y, uint8_t scale, uint8_t color, const char *str ) {
+void drawString( uint8_t *sym, uint16_t x, uint16_t y, uint8_t scale, uint8_t color, const char *str, uint8_t len ) {
 
    uint8_t *vec = (uint8_t*)font_addr_string;
    uint16_t v_sz = 0;
 
-  for (uint8_t j=0; j<strlen(str); j++) {
+  for (uint8_t j=0; j<len; j++) {
+      if ( (uint16_t)&vec[v_sz] + len + 8 >= VECTOR_RAM_END ) kill( 1 );
+
       char ch = str[ j ];
 
+      uint16_t sz = fontSize( ch );
       uint8_t *in = (uint8_t*)fontAddress( ch );
       if ( in ) {
-           uint16_t sz = vectorSize( in );
-
-           if ( (uint16_t)&vec[v_sz] + sz + 8 >= VECTOR_RAM_END ) {
-               break;
-           }
-
            memcpy( &vec[v_sz], in, sz );
            v_sz += sz;
            vec[v_sz - 4] &= ~ SEGA_LAST;
@@ -254,7 +248,7 @@ void drawString( uint8_t *sym, uint16_t x, uint16_t y, uint8_t scale, uint8_t co
 
    vec[v_sz - 4] |= SEGA_LAST;
 
-   colorize( vec, 0, color );
+   colorize( vec, v_sz, color );
 
    sym[ SFIELD_VISIBLE(0) ] = SEGA_VISIBLE;
    sym[ SFIELD_X_L(0) ] = LSB(x);
@@ -268,10 +262,8 @@ void drawString( uint8_t *sym, uint16_t x, uint16_t y, uint8_t scale, uint8_t co
    sym[ SFIELD_SCALE(0) ] = scale;
 }
 
+
 void colorize( uint8_t *vec, uint16_t len, uint8_t color ) {
-   if ( !len ) {
-        len = vectorSize( vec );
-   }
    for (uint16_t i=0; i<len; i+=4) {
       vec[i] &= ~0x7E;
       vec[i] |= (color & 0x7E);
