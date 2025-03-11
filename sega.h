@@ -111,6 +111,26 @@ __sfr __at 0x39 VOTRAX_COMMAND;
 __sfr __at 0x3f SOUND_COMMAND;
 
 
+//   2048-   -------------------
+//          |                   |
+//          |                   |
+//   1536-  |     ---------     |
+//          |    |         |    |
+//   1024-  |    |    +    |    |
+//          |    |         |    |
+//    512-  |     ---------     |
+//          |                   |
+//          |                   |
+//      0-   -------------------
+//          |    |    |    |    |
+//          0   512 1024  1536 2048
+
+//   315  0  45
+//      \ | /
+//   270 -+- 90
+//      / | \
+//   225 180  135
+
 // 0 = 0 deg, 2^10 (1024) = 360 deg
 #define SEGA_ANGLE(deg)    ((int16_t)(((float)(deg))*2.845))
 
@@ -141,14 +161,18 @@ typedef struct {
 #define SFIELD_SCALE(row)   (((row)*10)+9)
 
 typedef struct {
-   uint8_t visible : 1;
-   uint8_t blue    : 2;
-   uint8_t green  : 2;
-   uint8_t red    : 2;
-   uint8_t last   : 1;
-   uint8_t length;   // unscaled size
-   uint8_t angle;   // degrees
-   uint8_t quadrant; // msb of 10 bit angle
+   union {
+      struct {
+         uint8_t visible : 1;
+         uint8_t blue    : 2;
+         uint8_t green   : 2;
+         uint8_t red     : 2;
+         uint8_t last    : 1;
+      };
+      uint8_t color;
+   };
+   uint8_t size;  // unscaled size
+   uint16_t angle;  // 0x7FF 10 bit angle
 } vector_t; // 4 bytes
 
 #define VFIELD_COLOR(row)   (((row)*4)+0)
@@ -287,10 +311,29 @@ inline uint16_t xy_multiply( uint8_t x, uint8_t y );
 uint16_t div_16(uint16_t u, uint16_t v);
 uint8_t divideBy10(uint8_t *value);
 uint8_t divideBy100(uint8_t *value);
-int8_t sinlut(uint16_t sega_angle, bool *negsign);
-uint8_t coslut(uint16_t sega_angle, bool *negsign);
+void vectorToXY( uint16_t sega_angle, uint16_t length, int16_t *x, int16_t *y );
+uint16_t xyToVector(uint16_t x, uint16_t y);
+
 #define randSegaAngle()    (rand() << 2)
 #define divideBy3(x)       (((x)>>2)+((x)>>4))
+#define divideBy5(x)       (((x)>>3)+((x)>>4)+((x)>>6))
+
+#define writeDebug( c,v ) \
+   do { \
+     uint8_t *mame = (uint8_t*)(0xF666); \
+     *mame = 0xBE; \
+     *mame = 0xEF; \
+     *mame = c; \
+     *mame = MSB(v); \
+     *mame = LSB(v); \
+   } while(0)
+
+#define kill(x) \
+   do { \
+     uint8_t *halt = (uint8_t*)(0x0000); \
+     *halt = x; \
+   } while(0)
+
 
 
 #endif //_SEGA_H_

@@ -80,7 +80,7 @@ uint8_t divideBy100(uint8_t *value) {
 }
 
 
-const uint8_t sin_table[] = {
+static const uint8_t sin_table[] = {
    0,2,3,5,6,8,9,11,13,14,16,17,19,20,22,23,25,27,28,30,31,33,34,36,38,39,41,42,44,45,47,48,50,51,53,54,56,58,59,61,62,64,65,
    67,68,70,71,73,74,76,77,79,80,82,83,85,86,88,89,91,92,93,95,96,98,99,101,102,104,105,106,108,109,111,112,114,115,116,118,
    119,120,122,123,125,126,127,129,130,131,133,134,135,137,138,139,141,142,143,145,146,147,148,150,151,152,153,155,156,157,
@@ -98,7 +98,7 @@ const uint8_t sin_table[] = {
 // and cos is just sin rotated 90
 // the table is large because it's using sega's 10bit angle datatype units unscaled for speed
 
-int8_t sinlut(uint16_t sega_angle, bool *negsign) {
+static int8_t sinlut(uint16_t sega_angle, bool *negsign) {
     if ( sega_angle < SEGA_ANGLE(90) ) {
         *negsign = false;
         return sin_table[ sega_angle ];
@@ -118,10 +118,72 @@ int8_t sinlut(uint16_t sega_angle, bool *negsign) {
     return sin_table[ SEGA_ANGLE(90) - sega_angle ];
 }
 
-uint8_t coslut(uint16_t sega_angle, bool *negsign) {
+static uint8_t coslut(uint16_t sega_angle, bool *negsign) {
     sega_angle += SEGA_ANGLE(90);
     if (sega_angle>=SEGA_ANGLE(360)) {
         sega_angle -= SEGA_ANGLE(360);
     }
     return sinlut( sega_angle, negsign );
 }
+
+void vectorToXY( uint16_t sega_angle, uint16_t length, int16_t *x, int16_t *y ) {
+  bool sin_neg, cos_neg;
+  
+  uint8_t sin_value = sinlut( sega_angle, &sin_neg );
+  uint8_t cos_value = coslut( sega_angle, &cos_neg );
+
+  *x = 0; *y = 0;
+  do {
+    uint16_t l = MIN(length,254);
+    *x += xy_multiply( 1 + l, sin_value ) >> 8;
+    *y += xy_multiply( 1 + l, cos_value ) >> 8;
+    length -= l;
+  } while (length);
+
+  if (sin_neg) {
+      *x = - *x;
+  }
+  if (cos_neg) {
+      *y = - *y;
+  }
+}
+
+/// float angle = 90 - (atan2( y-1024, x-1024 ) * 180 / M_PI);
+//  x=512; x<1536; x+=64
+//  y=512; y<1536; y+=64
+static const uint8_t atan_lut[256] = { 
+    160,162,165,169,173,177,182,186,192,197,201,206,210,214,218,221,
+    157,160,163,166,170,175,180,186,192,197,203,208,213,217,220,224,
+    154,156,160,163,168,173,178,185,192,198,205,210,215,220,224,227,
+    150,153,156,160,164,169,176,183,192,200,207,214,219,224,227,230,
+    146,149,151,155,160,165,173,182,192,201,210,218,224,228,232,234,
+    142,144,146,150,154,160,168,178,192,205,215,224,229,233,237,239,
+    137,139,141,143,146,151,160,173,192,210,224,232,237,240,242,244,
+    133,133,134,136,137,141,146,160,192,224,237,242,246,247,249,250,
+    128,128,128,128,128,128,128,128,64,0,0,0,0,0,0,0,
+    122,122,121,119,118,114,109,96,64,32,18,13,9,8,6,5,
+    118,116,114,112,109,104,96,82,64,45,32,23,18,15,13,11,
+    113,111,109,105,101,96,87,77,64,50,40,32,26,22,18,16,
+    109,106,104,100,96,90,82,73,64,54,45,37,32,27,23,21,
+    105,102,99,96,91,86,79,72,64,55,48,41,36,32,28,25,
+    101,99,96,92,87,82,77,70,64,57,50,45,40,35,32,28,
+    98,96,92,89,85,80,75,69,64,58,52,47,42,38,35,32,
+};
+
+uint16_t xyToVector(uint16_t x, uint16_t y) {
+   // optimization, for view area which is 1024 +/- 512
+   // but we want fast math like 16 not 17 columns, so 1472 is max.
+   x = MAX(x, 512);
+   x = MIN(x, 1472);
+   y = MAX(y, 512);
+   y = MIN(y, 1472);
+   // optimization, all unsigned everything relative to center of screen
+   // and we're only looking at every 64th pixel, so shrink the table to 16x16 with an 8bit index
+   uint8_t x0 = (x - 512) >> 6;  // 64th
+   uint8_t y0 = (y - 512) >> 6; 
+   uint8_t ix = y0+(x0<<4); // 16 cols
+   uint16_t a = atan_lut[ ix ] << 2; // expand from 8bit to sega 10bit
+   return a;
+}
+
+

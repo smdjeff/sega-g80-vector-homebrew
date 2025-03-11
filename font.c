@@ -144,10 +144,10 @@ uint16_t fontAddress( char c ) {
    const uint16_t font_alpha[] = {
       0x0000,0x0018,0x0034,0x0044,0x005c,0x0074,0x0088,0x00a0,0x00b8,0x00d0,
       0x00e0,0x00f8,0x0104,0x0118,0x0128,0x013c,0x0150,0x016c,0x0188,0x01a0,
-      0x01b0,0x01c0,0x01cc,0x01e0,0x01f0,0x0208,0x0208+(4*4)};
+      0x01b0,0x01c0,0x01cc,0x01e0,0x01f0,0x0208,0x0208+(4*sizeof(vector_t))};
 
    const uint16_t font_numeric[] = {
-      0x0000,0x0014,0x001C,0x0034,0x004C,0x0060,0x0078,0x008C,0x0098,0x00B4,0x00B4+(5*4)};
+      0x0000,0x0014,0x001C,0x0034,0x004C,0x0060,0x0078,0x008C,0x0098,0x00B4,0x00B4+(5*sizeof(vector_t))};
 
    if ( c>='0' && c<='9' ) return font_addr_numeric + font_numeric[ c-'0' ];
 
@@ -217,7 +217,7 @@ void drawString( uint8_t *sym, uint16_t x, uint16_t y, uint8_t scale, uint8_t co
    uint16_t v_sz = 0;
 
   for (uint8_t j=0; j<len; j++) {
-      if ( (uint16_t)&vec[v_sz] + len + 8 >= VECTOR_RAM_END ) kill( 1 );
+      if ( (uint16_t)&vec[v_sz] + len + (sizeof(vector_t)*2) >= VECTOR_RAM_END ) kill( 1 );
 
       char ch = str[ j ];
 
@@ -246,7 +246,9 @@ void drawString( uint8_t *sym, uint16_t x, uint16_t y, uint8_t scale, uint8_t co
      }
    }
 
-   vec[v_sz - 4] |= SEGA_LAST;
+   if ( (uint16_t)&vec[v_sz-sizeof(vector_t)] < VECTOR_RAM + SYMBOLS_SZ ) kill( 2 );
+
+   vec[v_sz - sizeof(vector_t)] |= SEGA_LAST;
 
    colorize( vec, v_sz, color );
 
@@ -264,7 +266,9 @@ void drawString( uint8_t *sym, uint16_t x, uint16_t y, uint8_t scale, uint8_t co
 
 
 void colorize( uint8_t *vec, uint16_t len, uint8_t color ) {
-   for (uint16_t i=0; i<len; i+=4) {
+   for (uint16_t i=0; i<len; i+=sizeof(vector_t)) {
+      if ( (uint16_t)&vec[i] < VECTOR_RAM + SYMBOLS_SZ  ) kill(3);
+      if ( (uint16_t)&vec[i] + len >= VECTOR_RAM_END ) kill(4);
       vec[i] &= ~0x7E;
       vec[i] |= (color & 0x7E);
    }
