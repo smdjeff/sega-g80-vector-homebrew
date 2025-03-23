@@ -129,6 +129,7 @@ static uint8_t coslut(uint16_t sega_angle, bool *negsign) {
 void vectorToXY( uint16_t sega_angle, uint16_t length, int16_t *x, int16_t *y ) {
   bool sin_neg, cos_neg;
   
+  sega_angle &= 0x03FF; // 0 to 2^10
   uint8_t sin_value = sinlut( sega_angle, &sin_neg );
   uint8_t cos_value = coslut( sega_angle, &cos_neg );
 
@@ -170,6 +171,8 @@ static const uint8_t atan_lut[256] = {
     98,96,92,89,85,80,75,69,64,58,52,47,42,38,35,32,
 };
 
+// this finds the angle between two points
+// so long as one of those points is always at 1024,1024 :)
 uint16_t xyToVector(uint16_t x, uint16_t y) {
    // optimization, for view area which is 1024 +/- 512
    // but we want fast math like 16 not 17 columns, so 1472 is max.

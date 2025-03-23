@@ -6,8 +6,6 @@
 #include <string.h>
 
 
-// #define ENABLE_UART
-
 
 #define BIT(n)             (1<<(n))
 #define MIN(a,b)           (((a)<(b))?(a):(b))
@@ -15,7 +13,7 @@
 #define LSB(x)             (uint8_t)((uint16_t)(x) & 0xFF)
 #define MSB(x)             (uint8_t)(((uint16_t)(x) >> 8) & 0xFF)
 #define LE(x)              LSB(x), MSB(x)
-
+#define SECONDS(s)         ((s)*1000/25)
 
 
 
@@ -134,14 +132,14 @@ __sfr __at 0x3f SOUND_COMMAND;
 // 0 = 0 deg, 2^10 (1024) = 360 deg
 #define SEGA_ANGLE(deg)    ((int16_t)(((float)(deg))*2.845))
 
-#define V_ADDR(x) (VECTOR_RAM+SYMBOLS_SZ+(x*4))
-#define S_ADDR(x) (VECTOR_RAM+(x*10))
-
+#define V_ADDR(x) (VECTOR_RAM+SYMBOLS_SZ+((x)*4))
+#define S_ADDR(x) (VECTOR_RAM + ((x)*10))
+#define SYM_ADDR(x) ((symbol_t*)(VECTOR_RAM+((x)*10)))
 
 typedef struct {
    uint8_t visible : 1;  // lsb
-   uint8_t group  : 6;   // user
-   uint8_t last   : 1;   // msb
+   uint8_t group   : 6;  // user
+   uint8_t last    : 1;  // msb
    uint16_t x;           // 0x000-0x7FF 10bit wrap, viewport is 0x200-0x600 with 0x400 center 
    uint16_t y;
    uint16_t vector_addr; // E000 - EFFF 4k Vector RAM
@@ -221,8 +219,8 @@ typedef enum {
    game_state_attract,
    game_state_play,
    game_state_game_over,
+   game_state_game_over_pause,
    game_state_highscore,
-   game_state_test
 } game_state_t;
 
 
@@ -300,9 +298,9 @@ typedef enum {
 #define FONT_STRING 0x01
 uint16_t installFonts( uint16_t addr );
 uint16_t fontAddress( char c );
-void drawString( uint8_t *symbol, uint16_t x, uint16_t y, uint8_t scale, uint8_t color, const char *str, uint8_t len );
+void drawString( symbol_t *sym, uint16_t x, uint16_t y, uint8_t scale, uint8_t color, const char *str, uint8_t len );
 void colorize( uint8_t *vector, uint16_t len, uint8_t color );
-void enableSymbol( uint8_t sid, uint16_t x, uint16_t y, uint16_t sega_angle, uint8_t scale );
+bool drawScore( uint8_t score, bool reset );
 
 ////////////////////////////////////
 // math.h
@@ -315,8 +313,9 @@ void vectorToXY( uint16_t sega_angle, uint16_t length, int16_t *x, int16_t *y );
 uint16_t xyToVector(uint16_t x, uint16_t y);
 
 #define randSegaAngle()    (rand() << 2)
-#define divideBy3(x)       (((x)>>2)+((x)>>4))
-#define divideBy5(x)       (((x)>>3)+((x)>>4)+((x)>>6))
+#define divide3(x)         (((x)>>2)+((x)>>4))
+#define divide5(x)         (((x)>>3)+((x)>>4)+((x)>>6))
+#define divide40(x)        ((((x)*26214U)+(1U<<19))>>20)
 
 #define writeDebug( c,v ) \
    do { \
