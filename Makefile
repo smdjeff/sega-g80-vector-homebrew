@@ -18,9 +18,12 @@ clean:
 # development is made easier by loading bootrom into 1873.cpu-u25
 # then romulator can be quickly loaded to a single large rom on the ROM board
 
+CFLAGS = -DENABLE_BOOTROM
+#CFLAGS += -DMAME_BUILD
+
 gamerom: prereq bootrom
 	@echo "building 32k rom at 0x800 for use with sega-boot-rom in cpu rom socket"
-	zcc +z80 --list -m -vn -SO3 -compiler=sdcc -startup=1 font.c math.c main.c usb.c -o $@ -create-app -DENABLE_BOOTROM -Cz"--rombase=0x0800 --romsize=30720"
+	zcc +z80 --list -m -vn -SO3 -compiler=sdcc -startup=1 font.c math.c main.c usb.c -o $@ -create-app $(CFLAGS) -Cz"--rombase=0x0800 --romsize=30720"
 	@mv $@* build/ 2>/dev/null || true
 	@mv *.lis build/ 2>/dev/null || true
 	@printf 'ROM usage: ' && stat -f '%z' build/$@_CODE.bin

@@ -317,22 +317,59 @@ uint16_t xyToVector(uint16_t x, uint16_t y);
 #define divide5(x)         (((x)>>3)+((x)>>4)+((x)>>6))
 #define divide40(x)        ((((x)*26214U)+(1U<<19))>>20)
 
-#define writeDebug( c,v ) \
-   do { \
-     uint8_t *mame = (uint8_t*)(0xF666); \
-     *mame = 0xBE; \
-     *mame = 0xEF; \
-     *mame = c; \
-     *mame = MSB(v); \
-     *mame = LSB(v); \
-   } while(0)
 
-#define kill(x) \
-   do { \
-     uint8_t *halt = (uint8_t*)(0x0000); \
-     *halt = x; \
-   } while(0)
+#ifdef MAME_BUILD
 
+// mame/sega/segag80v.cpp
+// void segag80v_state::init_startrek()
+//     ...
+//     m_decrypt = segag80_security(0); // security free
 
+// mame/src/devices/cpu/z80/z80.cpp
+// void z80_device::data_write(u16 addr, u8 value)
+// {
+//    if ( addr == 0xF666 ) {
+//       static u8 packet[5] = {0,};
+//       packet[0] = packet[1];
+//       packet[1] = packet[2];
+//       packet[2] = packet[3];
+//       packet[3] = packet[4];
+//       packet[4] = value;
+//       if ( packet[0] == 0xbe && packet[1] == 0xef ) {
+//            char c = packet[2];
+//             uint16_t v = (packet[3] << 8) + packet[4];
+//             printf( "debug(%c): %04x(%d)\n", c, v, v );
+//       }
+//       return;
+//    }
+//    assert( SP > (0xC800+(1*1024)) );
+//    assert( !(addr == 0x0000) );
+//    assert( !(addr > 0xbfff && addr < 0xc800) );
+//    assert( !(addr > 0xefff) );
+//    m_data.write_interruptible(translate_memory_address((u32)addr), value);
+// }
+
+   #define writeDebug( c,v ) \
+      do { \
+        uint8_t *mame = (uint8_t*)(0xF666); \
+        *mame = 0xBE; \
+        *mame = 0xEF; \
+        *mame = c; \
+        *mame = MSB(v); \
+        *mame = LSB(v); \
+      } while(0)
+
+   #define kill(x) \
+      do { \
+        uint8_t *halt = (uint8_t*)(0x0000); \
+        *halt = x; \
+      } while(0)
+
+#else 
+
+   #define writeDebug(c,v) do {} while(0)
+   #define kill(x) do {} while(0)
+
+#endif
 
 #endif //_SEGA_H_

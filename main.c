@@ -693,10 +693,10 @@ static uint16_t spinner_vector_angle( bool reset ) {
       uint8_t delta = lastvalue - value;
       // spinner angle in degrees is about 5.6 * value
       // vector is SEGA_ANGLE( angle ), so 2.845 * 5.6 = ~16
-      #if 1
-         delta >>= 2;
+      #ifdef MAME_BUILD
+         delta >>= 2; // mame seems to increment the spinner inaccurately
       #else
-         // seems to work great on real hardware, but not in mame
+         // seems to work great on real hardware
          delta <<= 4;  // x 16
       #endif
       if (dir) {
