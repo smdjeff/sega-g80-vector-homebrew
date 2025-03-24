@@ -1082,7 +1082,7 @@ static bool drawAttract( void ) {
          const uint8_t i = ((state - 5) / 2);
          memcpy( &s[0], high_name[i], 3 );
          digits3( &s[4], &s[5], &s[6], high_score[i] );
-         drawString( SYM_ADDR(S_STRING), 0, CENTER_Y+40, 0xFE, SEGA_COLOR_CYAN, s, sizeof(s) );
+         drawString( SYM_ADDR(S_STRING), 0, CENTER_Y+40, 0xA0, SEGA_COLOR_CYAN, s, sizeof(s) );
          setTrajectory( S_STRING, 20, SEGA_ANGLE(90) );
          state++;
          break; }
@@ -1090,7 +1090,7 @@ static bool drawAttract( void ) {
       case 6:
       case 8:
       case 10:
-         if ( ((symbol_t*)symbols)[S_STRING].x > CENTER_X-256 ) {
+         if ( ((symbol_t*)symbols)[S_STRING].x > CENTER_X-150 ) {
             setStop( S_STRING );
          }
          break;
