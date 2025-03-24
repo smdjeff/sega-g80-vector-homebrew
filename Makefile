@@ -40,7 +40,11 @@ roms: prereq gamerom
 	@split -b 2048 build/gamerom.bin roms/part_
 	@i=0; \
 	for f in $$(ls roms/part_* | sort); do \
-		mv "$$f" "roms/$$(($$i + 1847)).prom-u$$i"; \
+		if [ "$$(crc32 "$$f")" = "3f55d17f" ]; then \
+			rm "$$f"; \
+		else \
+			mv "$$f" "roms/$$(($$i + 1847)).prom-u$$i"; \
+		fi; \
 		i=$$(($$i + 1)); \
 	done
 	@rm roms/1847.prom-u0
