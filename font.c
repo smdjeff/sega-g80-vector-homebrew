@@ -163,25 +163,25 @@ static inline uint16_t fontSize( char c ) {
 // SEGA_ANGLE(90)
 static uint8_t offset_x( char ch ) {
      switch ( ch ) {
-          case 'a': return 0x04;
-          case 'c': return 0x08;
-          case 'd': return 0x0c;
-          case 'f': return 0x24;
-          case 'g': return 0x04;
-          case 'k': return 0x18;
-          case 'o': return 0x04;
-          case 'q': return 0x0c;
-          case 'r': return 0x06;
-          case 's': return 0x04;
-          case 'u': return 0x24;
-          case 'y': return 0x18;
-          case '0': return 0x04;
-          case '1': return 0x08;
-          case '3': return 0x08;
-          case '5': return 0x08;
-          case '9': return 0x08;
+          case 'a': return 0x04+3;
+          case 'c': return 0x08+3;
+          case 'd': return 0x0c+3;
+          case 'f': return 0x24+3;
+          case 'g': return 0x04+3;
+          case 'k': return 0x18+3;
+          case 'o': return 0x04+3;
+          case 'q': return 0x0c+3;
+          case 'r': return 0x06+3;
+          case 's': return 0x04+3;
+          case 'u': return 0x24+3;
+          case 'y': return 0x18+3;
+          case '0': return 0x04+3;
+          case '1': return 0x08+3;
+          case '3': return 0x08+3;
+          case '5': return 0x08+3;
+          case '9': return 0x08+3;
      }
-     return 0x21;
+     return 0x21+3;
 }
 
 // SEGA_ANGLE(0)
@@ -213,17 +213,16 @@ static uint8_t offset_y( char ch ) {
 void drawString( symbol_t *sym, uint16_t x, uint16_t y, uint8_t scale, uint8_t color, const char *str, uint8_t len ) {
    uint8_t *vec = (uint8_t*)font_addr_string;
    uint16_t v_sz = 0;
+   
+   sym->vector_addr = V_ADDR(0); // blank
 
-   sym->visible = 0;
-
-  for (uint8_t j=0; j<len; j++) {
+  for (uint8_t i=0; i<len; i++) {
       if ( (uint16_t)&vec[v_sz] + len + (sizeof(vector_t)*2) >= VECTOR_RAM_END ) kill( 1 );
 
-      char ch = str[ j ];
-
-      uint16_t sz = fontSize( ch );
+      char ch = str[ i ];
       uint8_t *in = (uint8_t*)fontAddress( ch );
       if ( in ) {
+           uint16_t sz = fontSize( ch );
            memcpy( &vec[v_sz], in, sz );
            v_sz += sz;
            vec[v_sz - 4] &= ~ SEGA_LAST;

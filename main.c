@@ -133,7 +133,10 @@ static inline void stretch4_fast(uint8_t *p, uint8_t i) {
 
 
    const uint8_t vector[] = {
-       #define V_LINE  (0)
+       #define V_BLANK (0)
+       SEGA_CLEAR|SEGA_LAST,            0, LE(SEGA_ANGLE(0)),
+
+       #define V_LINE  (V_BLANK+1)
        SEGA_CLEAR,                   0x25, LE(SEGA_ANGLE(130)),
        SEGA_COLOR_YELLOW|SEGA_LAST,  0x1C, LE(SEGA_ANGLE(270)),
 
@@ -564,7 +567,7 @@ static inline void stretch4_fast(uint8_t *p, uint8_t i) {
       0,             LE(1024), LE(1024), LE(V_ADDR(V_SMOKE)), LE(SEGA_ANGLE(0)),   0x40,
 
       #define S_LAST  30
-      SEGA_LAST,     LE(1024), LE(1024), LE(V_ADDR(V_SMOKE)), LE(SEGA_ANGLE(0)),   0x40,
+      SEGA_VISIBLE|SEGA_LAST, LE(1024), LE(1024), LE(V_ADDR(V_BLANK)), LE(0), 0x80,
    };
    
 
@@ -976,14 +979,14 @@ static void resetVectors( void ) {
 }
 
 static void beginAttract( void ) {
-
    resetVectors();
 
    // set font 'a' thru 'z' to brightest white for phosphor afterglow
    colorize( (uint8_t*)fontAddress('a'), fontAddress('z'+1)-fontAddress('a'), SEGA_COLOR_BRWHITE );
 
    // disable all other symbols on screen
-   symbols[ SFIELD_VISIBLE(S_STRING) ] = SEGA_LAST;
+   // interestingly, hardware ignores last flag if it's not also visible
+   symbols[ SFIELD_VISIBLE(S_STRING) ] = SEGA_VISIBLE|SEGA_LAST;
 }
 
 
