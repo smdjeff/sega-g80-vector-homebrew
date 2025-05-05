@@ -95,7 +95,9 @@ __sfr __at 0xfc PORT_374;
 __sfr __at 0xf8 PORT_370;
 #define SELECT_SPINNER     0xFE
 #define SELECT_BUTTONS     0xFF
-#define IO_COIN_N          BIT(5)
+#define IO_SERVICE_N       BIT(5)
+#define IO_COIN0_N         BIT(6)
+#define IO_COIN1_N         BIT(7)
 
 __sfr __at 0xf9 PORT_371;
 
@@ -137,9 +139,14 @@ __sfr __at 0x3f SOUND_COMMAND;
 #define SYM_ADDR(x) ((symbol_t*)(VECTOR_RAM+((x)*10)))
 
 typedef struct {
-   uint8_t visible : 1;  // lsb
-   uint8_t group   : 6;  // user
-   uint8_t last    : 1;  // msb
+   union {
+      struct {
+         uint8_t visible : 1;  // lsb
+         uint8_t group   : 6;  // user
+         uint8_t last    : 1;  // msb
+      };
+      uint8_t flags;
+   };
    uint16_t x;           // 0x000-0x7FF 10bit wrap, viewport is 0x200-0x600 with 0x400 center 
    uint16_t y;
    uint16_t vector_addr; // E000 - EFFF 4k Vector RAM

@@ -50,8 +50,8 @@ void z80_rst_38h (void) __critical __interrupt(0) {
 
    static uint8_t debounce = 0;
    if ( debounce == 0 ) {
-      if ( !(PORT_370 & IO_COIN_N) ) {
          debounce = 20; // half second
+      if ( !(PORT_370 & IO_COIN0_N) ) {
          _coin_counter++;
          SOUND_COMMAND = COIN_DROP;
       }
