@@ -1015,17 +1015,15 @@ static bool drawAttract( void ) {
    }
 
    static uint8_t state = 0;
+   static uint8_t state_ix = 0;
+   static uint16_t state_iy = 0;
    static uint16_t last_tick = 0;
-   if ( system_tick - last_tick > SECONDS(3) ) {
-      last_tick = system_tick;
-      state++;
-   }
 
    static uint8_t last_coin_counter = 0;
    uint16_t coin_counter = _coin_counter;
    if ( coin_counter != last_coin_counter ) {
       last_coin_counter = coin_counter;
-      last_tick = system_tick;
+      // todo: reset some things like size of s_score0?
       state = 2;
    }
 
@@ -1034,7 +1032,7 @@ static bool drawAttract( void ) {
       case 0: {
          const char s[] = "game over";
          drawString( SYM_ADDR(S_STRING), CENTER_X-155, MIN_Y+40, 0x80, SEGA_COLOR_YELLOW, s, sizeof(s)-1 );
-         enableSymbol( S_SCORE0, MIN_X-70, CENTER_Y, SEGA_ANGLE(0), 0xFF );
+         last_tick = system_tick;
          state++;
          break; }
 
@@ -1046,6 +1044,7 @@ static bool drawAttract( void ) {
             const char s[] = "insert coin";
             drawString( SYM_ADDR(S_STRING), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_GREEN, s, sizeof(s)-1 );
          }
+         last_tick = system_tick;
          state++;
          break;
 
@@ -1054,6 +1053,8 @@ static bool drawAttract( void ) {
          const char str[] = "attack vektor";
          symbol_t *sym = &((symbol_t *)symbols)[ S_SCORE0 ];
          sym->x = MIN_X-70;
+         sym->y = CENTER_Y;
+         sym->scale = 0xFF;
          for ( uint8_t i=0; i<sizeof(str); i++ ) {
             // draw as fast as possible 
             // but in step with vector XY redraw which we're sensing indirectly though system_tick IRQ
@@ -1071,30 +1072,42 @@ static bool drawAttract( void ) {
                sym->visible = true;
             }
          }
+         if ( system_tick - last_tick > SECONDS(3) ) {
+            sym[ S_SCORE0 ].visible = false;
+            state_ix = 0;
+            state_iy = CENTER_Y+250;
+            state++;
+         }
          break; }
 
       case 4:
-         sym[ S_SCORE0 ].visible = false;
-         state++;
-         break;
-
-      case 5:
       case 7:
-      case 9: {
-         char s[7];
-         const uint8_t i = ((state - 5) / 2);
-         memcpy( &s[0], high_name[i], 3 );
-         digits3( &s[4], &s[5], &s[6], high_score[i] );
-         drawString( SYM_ADDR(S_STRING), 0, CENTER_Y+40, 0xA0, SEGA_COLOR_CYAN, s, sizeof(s) );
+      case 10: {
+         char s[7] = {0,};
+         memcpy( &s[0], high_name[state_ix], 3 );
+         digits3( &s[4], &s[5], &s[6], high_score[state_ix] );
+         drawString( SYM_ADDR(S_STRING), 0, state_iy, 0xA0, SEGA_COLOR_CYAN, s, sizeof(s) );
          setTrajectory( S_STRING, 20, SEGA_ANGLE(90) );
+         state_ix++;
+         state_iy -= 250;
          state++;
          break; }
 
-      case 6:
+      case 5:
       case 8:
-      case 10:
+      case 11:
          if ( ((symbol_t*)symbols)[S_STRING].x > CENTER_X-150 ) {
             setStop( S_STRING );
+            last_tick = system_tick;
+            state++;
+         }
+         break;
+
+      case 6:
+      case 9:
+      case 12:
+         if ( system_tick - last_tick > SECONDS(1) ) {
+            state++;
          }
          break;
 
