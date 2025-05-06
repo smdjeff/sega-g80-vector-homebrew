@@ -1073,7 +1073,7 @@ static bool drawAttract( void ) {
             }
          }
          if ( system_tick - last_tick > SECONDS(3) ) {
-            sym[ S_SCORE0 ].visible = false;
+            sym->visible = false;
             state_ix = 0;
             state_iy = CENTER_Y+250;
             state++;
