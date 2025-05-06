@@ -19,6 +19,28 @@
 
 ////////////////////////////////////
 // sega g80 memory map
+//
+// 0x0000   -------------------
+//          CPU BOOT ROM (2k)
+// 0x0800   -------------------
+//          CPU ROM board (46k)
+// 0xC000   -------------------
+//          NA (2k)
+// 0xC800   -------------------
+//          CPU RAM (2k)
+// 0xD000   -------------------
+//          USB RAM (4k)
+// 0xE000   -------------------
+//          XY RAM (4k)
+//             symbols
+// 0xE160      vectors
+// 0xE5FC         font_addr_alpha
+// 0xE814         font_addr_numeric
+// 0xE8DC         font_addr_string
+// 0xF000   -------------------
+//          NA (4k)
+// 0xFFFF
+
 #define CPU_ROM         (0x0000) // 2k power on and diagnostics rom (cpu board)
 #define CPU_ROM_SZ      (2*1024)
 
@@ -205,10 +227,10 @@ typedef struct {
 
 #define CENTER_X (1024)
 #define CENTER_Y (1024)
-#define MAX_X (1024+450)
-#define MIN_X (1024-450)
-#define MAX_Y (1024+400)
-#define MIN_Y (1024-400)
+#define MIN_X (1024-450) // 574
+#define MAX_X (1024+450) // 1474
+#define MIN_Y (1024-400) // 624
+#define MAX_Y (1024+400) // 1424
 
 // sounds
 #define BASE_DRUM    0x2E
@@ -228,6 +250,10 @@ typedef enum {
    game_state_game_over,
    game_state_game_over_pause,
    game_state_highscore,
+   game_state_diagnostics_io_init,
+   game_state_diagnostics_io,
+   game_state_diagnostics_grid_init,
+   game_state_diagnostics_grid,
 } game_state_t;
 
 

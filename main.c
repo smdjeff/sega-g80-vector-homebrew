@@ -58,6 +58,13 @@ void z80_rst_38h (void) __critical __interrupt(0) {
          SOUND_COMMAND = COIN_DROP;
          debounce = 20;
       }
+      if (button_edge & IO_SERVICE_N) {
+         if ( game_state != game_state_diagnostics_io ) {
+            game_state = game_state_diagnostics_io_init;
+         } else {
+            game_state = game_state_diagnostics_grid_init;
+         }
+        debounce = 20;
       }
    } else {
       debounce--;
@@ -1468,6 +1475,97 @@ static bool drawGameOver(void) {
    return false;
 }
 
+static void beginDiagnosticsIO( void ) {
+   resetVectors();
+   symbols[ SFIELD_VISIBLE(S_STRING) ] = SEGA_VISIBLE|SEGA_LAST;
+   colorize( (uint8_t*)fontAddress('a'), fontAddress('z'+1)-fontAddress('a'), SEGA_COLOR_WHITE );
+   colorize( (uint8_t*)fontAddress('0'), fontAddress('9'+1)-fontAddress('0'), SEGA_COLOR_WHITE );
+   enableSymbol( S_SCORE0, CENTER_X-70, CENTER_Y-40, SEGA_ANGLE(0), 0xA0 );
+   enableSymbol( S_SCORE1, CENTER_X-10, CENTER_Y-40, SEGA_ANGLE(0), 0xA0 );
+   enableSymbol( S_SCORE2, CENTER_X+50, CENTER_Y-40, SEGA_ANGLE(0), 0xA0 );
+}
+
+static void drawDiagnosticsIO( void ) {
+   uint16_t angle = spinner_vector_angle(false);
+   const char *hex = "0123456789abcdef";
+   uint8_t d0 = hex[ (angle >> 8) & 0x0F ];
+   uint8_t d1 = hex[ (angle >> 4) & 0x0F ];
+   uint8_t d2 = hex[ (angle >> 0) & 0x0F ];
+   symbol_t *sym = (symbol_t*)symbols;
+   sym[ S_SCORE0 ].vector_addr = fontAddress( d0 );
+   sym[ S_SCORE1 ].vector_addr = fontAddress( d1 );
+   sym[ S_SCORE2 ].vector_addr = fontAddress( d2 );
+
+   static uint8_t last_f8 = 0xFF;
+   uint8_t f8 = PORT_370;
+   if ( f8 != last_f8 ) {
+      last_f8 = f8;
+      static uint8_t s[8];
+      s[0] = (f8 & BIT(0)) ? '1' : '0';
+      s[1] = (f8 & BIT(1)) ? '1' : '0';
+      s[2] = (f8 & BIT(2)) ? '1' : '0';
+      s[3] = (f8 & BIT(3)) ? '1' : '0';
+      s[4] = (f8 & BIT(4)) ? '1' : '0';
+      s[5] = (f8 & BIT(5)) ? '1' : '0';
+      s[6] = (f8 & BIT(6)) ? '1' : '0';
+      s[7] = (f8 & BIT(7)) ? '1' : '0';
+      drawString( SYM_ADDR(S_STRING), CENTER_X-100, CENTER_Y+40, 0x80, SEGA_COLOR_WHITE, s, 8 );
+   }
+}
+
+static void writeVec( vector_t *vec, uint8_t size, uint8_t color, uint8_t last ) {
+   memset( vec, 0x00, sizeof(vector_t) );
+   vec->color = color;
+   vec->visible = 1;
+   vec->last = last;
+   vec->size = size;
+   vec->angle = 0;
+}
+
+static void beginDiagnosticsGrid( void ) {
+   vector_t *vec = (vector_t*)vectors;
+   // MAX_X-MIN_X = 900
+   writeVec( vec,   240, SEGA_COLOR_RED, 0 );
+   writeVec( vec+1, 240, SEGA_COLOR_BLUE, 0 );
+   writeVec( vec+2, 240, SEGA_COLOR_GREEN, 0 );
+   writeVec( vec+3, 180, SEGA_COLOR_WHITE, 1 );
+
+   // MAX_Y-MIN_Y = 800
+   writeVec( vec+4, 255, SEGA_COLOR_YELLOW, 0 );
+   writeVec( vec+5, 9,  SEGA_COLOR_YELLOW, 0 );
+   writeVec( vec+6, 255, SEGA_COLOR_CYAN, 0 );
+   writeVec( vec+7, 9,  SEGA_COLOR_CYAN, 0 );
+   writeVec( vec+8, 255, SEGA_COLOR_MAGENTA, 0 );
+   writeVec( vec+9, 10,  SEGA_COLOR_MAGENTA, 1 );
+
+   symbol_t *sym = (symbol_t*)symbols;
+   for (uint16_t y=MIN_Y; y<MAX_Y+1; y+=(MAX_Y-MIN_Y)/12) {
+      sym->visible = 1;
+      sym->last = 0;
+      sym->x = MIN_X;
+      sym->y = y;
+      sym->vector_addr = (uint16_t)vec;
+      sym->rotation = SEGA_ANGLE(90);
+      sym->scale = 0x80;
+      sym++;
+   }
+
+   for (uint16_t x=MIN_X; x<MAX_X+1; x+=(MAX_X-MIN_X)/15) {
+      sym->visible = 1;
+      sym->last = 0;
+      sym->x = x;
+      sym->y = MIN_Y;
+      sym->vector_addr = (uint16_t)(vec+4);
+      sym->rotation = SEGA_ANGLE(0);
+      sym->scale = 0x80;
+      sym++;
+   }
+
+   (sym-1)->last = 1;
+}
+
+static void drawDiagnosticsGrid( void ) {
+}
 
 
 
@@ -1528,6 +1626,25 @@ static void super_loop(void) {
                keepPuffing();
             }
             break;
+
+         case game_state_diagnostics_io_init:
+            beginDiagnosticsIO();
+            game_state = game_state_diagnostics_io;
+            break;
+
+         case game_state_diagnostics_io:
+            drawDiagnosticsIO();
+            break;
+
+         case game_state_diagnostics_grid_init:
+            beginDiagnosticsGrid();
+            game_state = game_state_diagnostics_grid;
+            break;
+
+         case game_state_diagnostics_grid:
+            drawDiagnosticsGrid();
+            break;
+
 
       }
 }
