@@ -49,17 +49,20 @@ void z80_rst_38h (void) __critical __interrupt(0) {
    div++;
 
    static uint8_t debounce = 0;
+   static uint8_t button_last = 0xff;
+   volatile uint8_t button = PORT_370; // force INTCL
+   uint8_t button_edge = (button_last ^ button) & ~button; // falling edge only
    if ( debounce == 0 ) {
-         debounce = 20; // half second
-      if ( !(PORT_370 & IO_COIN0_N) ) {
+      if (button_edge & IO_COIN0_N) {
          _coin_counter++;
          SOUND_COMMAND = COIN_DROP;
+         debounce = 20;
+      }
       }
    } else {
       debounce--;
    }
-
-   volatile uint8_t intcl = PORT_370; // force INTCL
+   button_last = button;
 }
 
 
