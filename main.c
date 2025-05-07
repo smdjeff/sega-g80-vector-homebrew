@@ -217,16 +217,16 @@ static inline void stretch5(uint8_t *p, uint16_t i) {
 
      #define V_FLAME (V_BARREL+9)
      SEGA_CLEAR,                       SIZE(14),  LE(SEGA_ANGLE(347)),
-     SEGA_COLOR_RED,                   SIZE(3),   LE(SEGA_ANGLE(315)),
-     SEGA_COLOR_RED,                   SIZE(2),   LE(SEGA_ANGLE(90)),
-     SEGA_COLOR_RED,                   SIZE(2),   LE(SEGA_ANGLE(0)),
-     SEGA_COLOR_RED,                   SIZE(2),   LE(SEGA_ANGLE(135)),
-     SEGA_COLOR_RED,                   SIZE(4),   LE(SEGA_ANGLE(22)),
-     SEGA_COLOR_RED,                   SIZE(4),   LE(SEGA_ANGLE(158)),
-     SEGA_COLOR_RED,                   SIZE(2),   LE(SEGA_ANGLE(45)),
-     SEGA_COLOR_RED,                   SIZE(2),   LE(SEGA_ANGLE(180)),
-     SEGA_COLOR_RED,                   SIZE(2),   LE(SEGA_ANGLE(90)),
-     SEGA_COLOR_RED|SEGA_LAST,         SIZE(3),   LE(SEGA_ANGLE(225)),
+     SEGA_COLOR_ORANGE,                SIZE(3),   LE(SEGA_ANGLE(315)),
+     SEGA_COLOR_ORANGE,                SIZE(2),   LE(SEGA_ANGLE(90)),
+     SEGA_COLOR_ORANGE,                SIZE(2),   LE(SEGA_ANGLE(0)),
+     SEGA_COLOR_ORANGE,                SIZE(2),   LE(SEGA_ANGLE(135)),
+     SEGA_COLOR_ORANGE,                SIZE(4),   LE(SEGA_ANGLE(22)),
+     SEGA_COLOR_ORANGE,                SIZE(4),   LE(SEGA_ANGLE(158)),
+     SEGA_COLOR_ORANGE,                SIZE(2),   LE(SEGA_ANGLE(45)),
+     SEGA_COLOR_ORANGE,                SIZE(2),   LE(SEGA_ANGLE(180)),
+     SEGA_COLOR_ORANGE,                SIZE(2),   LE(SEGA_ANGLE(90)),
+     SEGA_COLOR_ORANGE|SEGA_LAST,      SIZE(3),   LE(SEGA_ANGLE(225)),
 
      #define V_MISSILE (V_FLAME+11)
      SEGA_CLEAR,                       SIZE(2),   LE(SEGA_ANGLE(0)),
