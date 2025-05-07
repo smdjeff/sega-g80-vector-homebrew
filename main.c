@@ -131,15 +131,8 @@ static inline void stretch5(uint8_t *p, uint16_t i) {
    p[sizeof(vector_t)*2] = MIN(255,i); i-=MIN(255,i);
    p[sizeof(vector_t)*3] = MIN(255,i); i-=MIN(255,i);
    p[sizeof(vector_t)*4] = MIN(255,i);
-
 }
 
-static inline void stretch4_fast(uint8_t *p, uint8_t i) {
-   p[sizeof(vector_t)*0] = i;
-   p[sizeof(vector_t)*1] = i;
-   p[sizeof(vector_t)*2] = i;
-   p[sizeof(vector_t)*3] = i;
-}
 
 
    const uint8_t vector[] = {
@@ -236,11 +229,7 @@ static inline void stretch4_fast(uint8_t *p, uint8_t i) {
      SEGA_COLOR_RED|SEGA_LAST,         SIZE(3),   LE(SEGA_ANGLE(225)),
 
      #define V_MISSILE (V_FLAME+11)
-     SEGA_CLEAR,                       SIZE(0),   LE(SEGA_ANGLE(0)),
-     SEGA_CLEAR,                       SIZE(0),   LE(SEGA_ANGLE(0)),
-     SEGA_CLEAR,                       SIZE(0),   LE(SEGA_ANGLE(0)),
-     SEGA_CLEAR,                       SIZE(0),   LE(SEGA_ANGLE(0)),
-     SEGA_CLEAR,                       SIZE(18),  LE(SEGA_ANGLE(0)),
+     SEGA_CLEAR,                       SIZE(2),   LE(SEGA_ANGLE(0)),
      SEGA_COLOR_YELLOW,                SIZE(1.2), LE(SEGA_ANGLE(158)),
      SEGA_COLOR_YELLOW,                SIZE(2),   LE(SEGA_ANGLE(180)),
      SEGA_COLOR_YELLOW,                SIZE(1),   LE(SEGA_ANGLE(135)),
@@ -249,7 +238,7 @@ static inline void stretch4_fast(uint8_t *p, uint8_t i) {
      SEGA_COLOR_YELLOW,                SIZE(2),   LE(SEGA_ANGLE(0)),
      SEGA_COLOR_YELLOW|SEGA_LAST,      SIZE(1.2), LE(SEGA_ANGLE(22)),
 
-     #define V_BLADE (V_MISSILE+12)
+     #define V_BLADE (V_MISSILE+8)
      SEGA_COLOR_CYAN,                  SIZE(1.3), LE(SEGA_ANGLE(55)),
      SEGA_COLOR_CYAN,                  SIZE(9),   LE(SEGA_ANGLE(90)),
      SEGA_COLOR_CYAN,                  SIZE(1),   LE(SEGA_ANGLE(180)),
@@ -359,15 +348,6 @@ static inline void stretch4_fast(uint8_t *p, uint8_t i) {
      SEGA_CLEAR,                       SIZE(2),   LE(SEGA_ANGLE(45)),  // 15 angle retrace
      SEGA_CLEAR,                       SIZE(8),   LE(SEGA_ANGLE(180)), // 16 retrace
      SEGA_COLOR_CYAN|SEGA_LAST,        SIZE(8),   LE(SEGA_ANGLE(270)), // 17 rear
-
-
-//        ^
-//        0
-//        |
-// < 270 -+- 90 >
-//        |
-//       180
-//        v
 
      #define V_STREET (V_CUBE2+18)
      SEGA_CLEAR,                       255,       LE(SEGA_ANGLE(0)),   // 0 up adjustable
@@ -499,8 +479,6 @@ static inline void stretch4_fast(uint8_t *p, uint8_t i) {
     };
 
 
-
-
    const uint8_t symbol[] = {
       // 10 bytes each entry
       // flags      x             y             address     rotation             scale
@@ -521,76 +499,80 @@ static inline void stretch4_fast(uint8_t *p, uint8_t i) {
       0,            LE(1024), LE(1024), LE(V_ADDR(V_BLANK)),     LE(0),               0x40,
 
       #define S_TANK      7
-      SEGA_VISIBLE, LE(1024), LE(1024), LE(V_ADDR(V_TANK)),  LE(SEGA_ANGLE(0)),   0x40,
+      0, LE(1024), LE(1024), LE(V_ADDR(V_TANK)),  LE(SEGA_ANGLE(0)),   0x40,
       #define S_TREAD     8
-      SEGA_VISIBLE, LE(1024), LE(1024), LE(V_ADDR(V_TREAD)), LE(SEGA_ANGLE(0)),   0x40,
+      0, LE(1024), LE(1024), LE(V_ADDR(V_TREAD)), LE(SEGA_ANGLE(0)),   0x40,
       #define S_TURRET    9
-      SEGA_VISIBLE, LE(1024), LE(1024), LE(V_ADDR(V_TURRET)), LE(SEGA_ANGLE(0)),   0x40,
+      0, LE(1024), LE(1024), LE(V_ADDR(V_TURRET)), LE(SEGA_ANGLE(0)),   0x40,
       #define S_BARREL   10
-      SEGA_VISIBLE, LE(1024), LE(1024), LE(V_ADDR(V_BARREL)), LE(SEGA_ANGLE(0)),   0x40,
+      0, LE(1024), LE(1024), LE(V_ADDR(V_BARREL)), LE(SEGA_ANGLE(0)),   0x40,
       #define S_FLAME    11
       0,            LE(1024), LE(1024), LE(V_ADDR(V_FLAME)), LE(SEGA_ANGLE(0)),   0x40,
-      #define S_MISSLE   12
+      #define S_MISSLE0   12
+      0,            LE(1024), LE(1024), LE(V_ADDR(V_MISSILE)), LE(SEGA_ANGLE(0)),   0x40,
+      #define S_MISSLE1   13
+      0,            LE(1024), LE(1024), LE(V_ADDR(V_MISSILE)), LE(SEGA_ANGLE(0)),   0x40,
+      #define S_MISSLE2   14
       0,            LE(1024), LE(1024), LE(V_ADDR(V_MISSILE)), LE(SEGA_ANGLE(0)),   0x40,
 
-      #define S_BOX      13
+      #define S_BOX      15
       0,            LE(1024), LE(1024), LE(V_ADDR(V_BOX)), LE(SEGA_ANGLE(0)),   0x80,
 
-      #define S_CHOPPER  14
+      #define S_CHOPPER  16
       0,            LE(1024), LE(MAX_Y-35), LE(V_ADDR(V_CHOPPER)), LE(0),     0x50,
-      #define S_BLADE    15
+      #define S_BLADE    17
       0,            LE(1024), LE(MAX_Y-35), LE(V_ADDR(V_BLADE)), LE(0),     0x50,
 
-      #define S_CUBE0    16
-      SEGA_VISIBLE, LE(MIN_X+10), LE(1024-300), LE(V_ADDR(V_CUBE0)), LE(0),     0xe0,
-      #define S_CUBE1    17
-      SEGA_VISIBLE, LE(MAX_X-70), LE(1024), LE(V_ADDR(V_CUBE1)), LE(0),     0xe0,
-      #define S_CUBE2    18
-      SEGA_VISIBLE, LE(MIN_X+10), LE(1024+300), LE(V_ADDR(V_CUBE2)), LE(0),    0xe0,
+      #define S_CUBE0    18
+      0, LE(MIN_X+10), LE(1024-300), LE(V_ADDR(V_CUBE0)), LE(0),     0xe0,
+      #define S_CUBE1    19
+      0, LE(MAX_X-70), LE(1024), LE(V_ADDR(V_CUBE1)), LE(0),     0xe0,
+      #define S_CUBE2    20
+      0, LE(MIN_X+10), LE(1024+300), LE(V_ADDR(V_CUBE2)), LE(0),    0xe0,
 
-      #define S_STREET   19
-      SEGA_VISIBLE,  LE(1024), LE(1024), LE(V_ADDR(V_STREET)), LE(0),    0x80,
+      #define S_STREET   21
+      0,  LE(1024), LE(1024), LE(V_ADDR(V_STREET)), LE(0),    0x80,
 
-      #define S_EXPLODE0 20
+      #define S_EXPLODE0 22
       0,             LE(1024), LE(1024), LE(V_ADDR(V_EXPLODE0)), LE(SEGA_ANGLE(0)),   0x40,
-      #define S_EXPLODE1 21
+      #define S_EXPLODE1 23
       0,             LE(1024), LE(1024), LE(V_ADDR(V_EXPLODE0)), LE(SEGA_ANGLE(45)),   0x20,
 
-      #define S_EXPLODE2 22
+      #define S_EXPLODE2 24
       0,             LE(1024), LE(1024), LE(V_ADDR(V_EXPLODE1)), LE(SEGA_ANGLE(0)),   0x40,
-      #define S_EXPLODE3 23
+      #define S_EXPLODE3 25
       0,             LE(1024), LE(1024), LE(V_ADDR(V_EXPLODE1)), LE(SEGA_ANGLE(11)),   0x40,
-      #define S_EXPLODE4 24
+      #define S_EXPLODE4 26
       0,             LE(1024), LE(1024), LE(V_ADDR(V_EXPLODE1)), LE(SEGA_ANGLE(22)),   0x40,
-      #define S_EXPLODE5 25
+      #define S_EXPLODE5 27
       0,             LE(1024), LE(1024), LE(V_ADDR(V_EXPLODE1)), LE(SEGA_ANGLE(33)),   0x40,
-      #define S_EXPLODE6 26
+      #define S_EXPLODE6 28
       0,             LE(1024), LE(1024), LE(V_ADDR(V_EXPLODE1)), LE(SEGA_ANGLE(44)),   0x40,
-      #define S_EXPLODE7 27
+      #define S_EXPLODE7 29
       0,             LE(1024), LE(1024), LE(V_ADDR(V_EXPLODE1)), LE(SEGA_ANGLE(55)),   0x40,
 
-      #define S_SMOKE0   28
+      #define S_SMOKE0   30
       0,             LE(1024), LE(1024), LE(V_ADDR(V_SMOKE)), LE(SEGA_ANGLE(0)),   0x40,
-      #define S_SMOKE1   29
+      #define S_SMOKE1   31
       0,             LE(1024), LE(1024), LE(V_ADDR(V_SMOKE)), LE(SEGA_ANGLE(0)),   0x40,
-      #define S_SMOKE2   30
+      #define S_SMOKE2   32
       0,             LE(1024), LE(1024), LE(V_ADDR(V_SMOKE)), LE(SEGA_ANGLE(0)),   0x40,
 
-      #define S_LAST  30
+      #define S_LAST  32
       SEGA_VISIBLE|SEGA_LAST, LE(1024), LE(1024), LE(V_ADDR(V_BLANK)), LE(0), 0x80,
    };
    
 
 
-// the xy ram is not dual port. and the xy board is running asynchonously 
-// from the cpu, so you can't read from it without collissions and corrupting graphics.
-uint8_t *symbols = (uint8_t*)(VECTOR_RAM); // must be at the top of vector ram   
+// the xy ram is not shadowed and the xy board is running asynchonously 
+// from the cpu, so you can't write it without corrupting graphics.
+symbol_t *symbols = (symbol_t*)(VECTOR_RAM); // must be at the top of vector ram
 
 // the vector table is useful to describe vectors, but since scale, position and rotation
 // are all set in the symbol drawing list that vector table might as well be in rom
 #define VECTOR_RAM_BASE (VECTOR_RAM+SYMBOLS_SZ)
 #define FONT_RAM_BASE   (V_ADDR(V_LAST))
-uint8_t *vectors = (uint8_t*)(VECTOR_RAM_BASE); // arbitrary location in vector ram
+vector_t *vectors = (vector_t*)(VECTOR_RAM_BASE); // arbitrary location in vector ram
 
 typedef struct {
    int8_t x_speed;
@@ -610,8 +592,8 @@ static void animate(void) {
    if ( frame == 0 ) return;
    last_tick = system_tick;
 
-   symbol_t *sym = (symbol_t*)symbols;
    for (uint8_t i=0; i<sizeof(symbol)/sizeof(symbol_t); i++) {
+      symbol_t *sym = &symbols[i];
       if ( sym->visible ) {
          motion_t *m = &motion[ i ];
          if ( m->slow && ((system_tick & 0x0003) != 0) ) continue;
@@ -637,7 +619,6 @@ static void animate(void) {
             }
          }
       }
-      sym += 1;
    }
 }
 
@@ -663,9 +644,8 @@ static inline void setResizeSpeed( uint8_t sid, int8_t resize_speed ) {
 
 static inline void setStop( uint8_t sid ) {
    motion_t *m = &motion[ sid ];
-   memset( m, 0x00, sizeof(motion_t) );
+   memset( (uint8_t*)m, 0x00, sizeof(motion_t) );
 }
-
 
 static void vector_init(void) {
    #if S_ADDR(S_LAST) > (VECTOR_RAM_BASE)
@@ -675,8 +655,8 @@ static void vector_init(void) {
        #error 'vectors do not fit in memory'
    #endif
 
-   memcpy( symbols, symbol, sizeof(symbol) );
-   memcpy( vectors, vector, sizeof(vector) );
+   memcpy( (uint8_t*)symbols, symbol, sizeof(symbol) );
+   memcpy( (uint8_t*)vectors, vector, sizeof(vector) );
 
    installFonts( (uint16_t)vectors+sizeof(vector) );
    // TODO: this should break the build if it doesn't fit.
@@ -846,40 +826,35 @@ static inline uint8_t quadrant( uint16_t x, uint16_t y ) {
    }
 }
 
-static inline void resetSymbol( symbol_t *sym, uint16_t x, uint16_t y, uint16_t sega_angle, uint8_t scale ) {
-   sym->x = x;
-   sym->y = y;
-   sym->rotation = sega_angle;
-   if ( scale != 0 ) sym->scale = scale;
+static inline void resetSymbol( uint8_t sid, uint16_t x, uint16_t y, uint16_t sega_angle, uint8_t scale ) {
+   symbols[sid].x = x;
+   symbols[sid].y = y;
+   symbols[sid].rotation = sega_angle;
+   if ( scale != 0 ) symbols[sid].scale = scale;
 }
 
 static void enableSymbol( uint8_t sid, uint16_t x, uint16_t y, uint16_t sega_angle, uint8_t scale ) {
-   symbol_t *sym = &((symbol_t *)symbols)[ sid ];
-   resetSymbol( sym, x, y, sega_angle, scale );
-   sym->visible = 1;
+   resetSymbol( sid, x, y, sega_angle, scale );
+   symbols[sid].visible = 1;
 }
 
 static void moveCubesX( void ) {
    for (uint8_t i=0; i<3; i++) {
-      symbol_t *sym = &((symbol_t *)symbols)[S_CUBE0 + i];
-      sym->x -= 1;
-      if ( sym->x < 250 ) {
-         sym->x = 1024+500;
+      symbols[S_CUBE0+i].x -= 1;
+      if ( symbols[S_CUBE0+i].x < 250 ) {
+         symbols[S_CUBE0+i].x = 1024+500;
       }
-      sym++;
    }
 }
 
 static void moveCubesY( void ) {
-   ((symbol_t*)symbols)[S_CHOPPER].y -= 1;
-   ((symbol_t*)symbols)[S_BLADE].y -= 1;
+   symbols[S_CHOPPER].y -= 1;
+   symbols[S_BLADE].y -= 1;
    for (uint8_t i=0; i<3; i++) {
-      symbol_t *sym = &((symbol_t *)symbols)[S_CUBE0 + i];
-      sym->y -= 1;
-      if ( sym->y < 250 ) {
-         sym->y = 1024+500;
+      symbols[S_CUBE0+i].y -= 1;
+      if ( symbols[S_CUBE0+i].y < 250 ) {
+         symbols[S_CUBE0+i].y = 1024+500;
       }
-      sym++;
    }
 }
 
@@ -895,8 +870,8 @@ static void skewCubes( void ) {
    if (ix>2) ix = 0;
 
    const uint16_t vid[] = { V_CUBE0, V_CUBE1, V_CUBE2 };
-   vector_t *vec = &((vector_t *)vectors)[ vid[ix] ];
-   symbol_t *sym = &((symbol_t *)symbols)[ S_CUBE0 + ix ];
+   vector_t *vec = &vectors[ vid[ix] ];
+   symbol_t *sym = &symbols[ S_CUBE0 + ix ];
 
    uint8_t quad = quadrant( sym->x, sym->y );
    if ( quad != last_quad[ ix ] ) {
@@ -949,43 +924,17 @@ static void drawTank(uint16_t angle) {
    static uint16_t last_angle = 0;
    if ( angle != last_angle ) {
       last_angle = angle;
-      symbol_t *sym = (symbol_t*)symbols;
-      sym[ S_BARREL ].rotation = angle;
-      sym[ S_TURRET ].rotation = angle;
-      sym[ S_FLAME ].rotation = angle;
+      symbols[ S_BARREL ].rotation = angle;
+      symbols[ S_TURRET ].rotation = angle;
+      symbols[ S_FLAME ].rotation = angle;
    }
-}
-
-static bool drawMissle(uint8_t *dist, int16_t *x, int16_t *y) {
-   symbol_t *sym = (symbol_t*)symbols;
-
-   if ( sym[ S_MISSLE ].visible ) {
-      if (*dist < 250 ) {
-         *dist += 2;
-         // easiest way to move this is to fix the origin at the center of the screen
-         // and stretch the invisible vectors at the beginning of the symbol
-         stretch4_fast( &vectors[ VFIELD_SIZE(V_MISSILE+0) ], *dist );
-
-         // although the hardware can quickly draw things at angles, we still have a lot 
-         // of math to find its x,y position to deal with collision detection
-         uint16_t length = (*dist << 1) + 70;
-         int16_t x0,y0;
-         vectorToXY( sym[S_MISSLE].rotation, length, &x0, &y0 );
-         *x = x0 + sym[S_MISSLE].x;
-         *y = y0 + sym[S_MISSLE].y;
-         return true;
-      } else {
-         symbols[ SFIELD_VISIBLE(S_MISSLE)] = 0;
-      }
-   }
-   return false;
 }
 
 
 static void resetVectors( void ) {
-   memset( motion, 0x00, sizeof(motion) );
-   memcpy( vectors, vector, sizeof(vector) ); // reset colorized vectors
-   memcpy( symbols, symbol, sizeof(symbol) ); // reset symbols
+   memset( (uint8_t*)motion, 0x00, sizeof(motion) );
+   memcpy( (uint8_t*)vectors, vector, sizeof(vector) ); // reset colorized vectors
+   memcpy( (uint8_t*)symbols, symbol, sizeof(symbol) ); // reset symbols
 }
 
 static void beginAttract( void ) {
@@ -996,12 +945,21 @@ static void beginAttract( void ) {
 
    // disable all other symbols on screen
    // interestingly, hardware ignores last flag if it's not also visible
-   symbols[ SFIELD_VISIBLE(S_STRING) ] = SEGA_VISIBLE|SEGA_LAST;
+   symbols[S_STRING].flags = SEGA_VISIBLE|SEGA_LAST;
 }
 
 
 static void endAttract( void ) {
    resetVectors();
+
+   symbols[ S_TANK ].visible = true;
+   symbols[ S_TREAD ].visible = true;
+   symbols[ S_TURRET ].visible = true;
+   symbols[ S_BARREL ].visible = true;
+   symbols[ S_CUBE0 ].visible = true;
+   symbols[ S_CUBE1 ].visible = true;
+   symbols[ S_CUBE2 ].visible = true;
+   symbols[ S_STREET ].visible = true;
 
    // set font 'a' thru 'z' to regular white
    colorize( (uint8_t*)fontAddress('a'), fontAddress('z'+1)-fontAddress('a'), SEGA_COLOR_WHITE );
@@ -1009,13 +967,12 @@ static void endAttract( void ) {
    // set numbers '0' thru '9' to pink
    colorize( (uint8_t*)fontAddress('0'), fontAddress('9'+1)-fontAddress('0'), SEGA_COLOR_MAGENTA );
 
-   // enable all other symbols on screen
-   symbols[ SFIELD_VISIBLE(S_STRING) ] = 0;
+   // clear last flag, enable all other symbols on screen
+   symbols[S_STRING].flags &= ~SEGA_LAST;
 }
 
 
 static bool drawAttract( void ) {
-   symbol_t *sym = (symbol_t*)symbols;
 
    if ( _coin_counter ) {
       if ( (PORT_374 & BUTTON_PLAYER_1) ) {
@@ -1033,7 +990,6 @@ static bool drawAttract( void ) {
    uint16_t coin_counter = _coin_counter;
    if ( coin_counter != last_coin_counter ) {
       last_coin_counter = coin_counter;
-      // todo: reset some things like size of s_score0?
       state = 2;
    }
 
@@ -1041,18 +997,19 @@ static bool drawAttract( void ) {
 
       case 0: {
          const char s[] = "game over";
-         drawString( SYM_ADDR(S_STRING), CENTER_X-155, MIN_Y+40, 0x80, SEGA_COLOR_YELLOW, s, sizeof(s)-1 );
+         drawString( &symbols[S_STRING], CENTER_X-155, MIN_Y+40, 0x80, SEGA_COLOR_YELLOW, s, sizeof(s)-1 );
          last_tick = system_tick;
          state++;
          break; }
 
       case 2:
+         setStop( S_STRING );
          if ( _coin_counter > 0 ) {
             const char s[] = "press start";
-            drawString( SYM_ADDR(S_STRING), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_BLUE, s, sizeof(s)-1 );
+            drawString( &symbols[S_STRING], CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_BLUE, s, sizeof(s)-1 );
          } else {
             const char s[] = "insert coin";
-            drawString( SYM_ADDR(S_STRING), CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_GREEN, s, sizeof(s)-1 );
+            drawString( &symbols[S_STRING], CENTER_X-165, MIN_Y+40, 0x80, SEGA_COLOR_GREEN, s, sizeof(s)-1 );
          }
          last_tick = system_tick;
          state++;
@@ -1061,7 +1018,7 @@ static bool drawAttract( void ) {
       case 1: 
       case 3: {
          const char str[] = "attack vektor";
-         symbol_t *sym = &((symbol_t *)symbols)[ S_SCORE0 ];
+         symbol_t *sym = &symbols[S_SCORE0];
          sym->x = MIN_X-70;
          sym->y = CENTER_Y;
          sym->scale = 0xFF;
@@ -1096,7 +1053,7 @@ static bool drawAttract( void ) {
          char s[7] = {0,};
          memcpy( &s[0], high_name[state_ix], 3 );
          digits3( &s[4], &s[5], &s[6], high_score[state_ix] );
-         drawString( SYM_ADDR(S_STRING), 0, state_iy, 0xA0, SEGA_COLOR_CYAN, s, sizeof(s) );
+         drawString( &symbols[S_STRING], 0, state_iy, 0xA0, SEGA_COLOR_CYAN, s, sizeof(s) );
          setTrajectory( S_STRING, 20, SEGA_ANGLE(90) );
          state_ix++;
          state_iy -= 250;
@@ -1106,7 +1063,7 @@ static bool drawAttract( void ) {
       case 5:
       case 8:
       case 11:
-         if ( ((symbol_t*)symbols)[S_STRING].x > CENTER_X-150 ) {
+         if ( symbols[S_STRING].x > CENTER_X-150 ) {
             setStop( S_STRING );
             last_tick = system_tick;
             state++;
@@ -1141,9 +1098,9 @@ static void beginDrawInitials( void ) {
 
 static bool drawInitials( void ) {
    static uint8_t ix = 0;
-   static uint16_t *addr[] = {  &symbols[ SFIELD_ADDR_L(S_NAME0) ],
-                                &symbols[ SFIELD_ADDR_L(S_NAME1) ],
-                                &symbols[ SFIELD_ADDR_L(S_NAME2) ] };
+   static uint16_t *addr[] = {  &symbols[S_NAME0].vector_addr,
+                                &symbols[S_NAME1].vector_addr,
+                                &symbols[S_NAME2].vector_addr };
 
    uint16_t vec_angle = spinner_vector_angle( false );
    char ch = 'a' + div_16( vec_angle, 39 ); // 2^10 / 26
@@ -1198,33 +1155,40 @@ bool drawScore( uint8_t score, bool reset ) {
       uint8_t d0,d1,d2;
       digits3( &d0, &d1, &d2, score );
       uint8_t r = score; // remainder
-      symbol_t *sym = (symbol_t*)symbols;
-      sym[ S_SCORE0 ].vector_addr = fontAddress( d0 );
-      sym[ S_SCORE1 ].vector_addr = fontAddress( d1 );
-      sym[ S_SCORE2 ].vector_addr = fontAddress( d2 );
+      symbols[ S_SCORE0 ].vector_addr = fontAddress( d0 );
+      symbols[ S_SCORE1 ].vector_addr = fontAddress( d1 );
+      symbols[ S_SCORE2 ].vector_addr = fontAddress( d2 );
    }
    return false;
 }
 
-static void shrapnel( uint16_t x, uint16_t y ) {
+static void shrapnel( symbol_t * sym ) {
    for (uint8_t sid=S_EXPLODE2, q=0; sid<=S_EXPLODE7; sid++,q++) {
       uint8_t scale = 0x30 + (q<<4);
       uint8_t velocity = 1 + 30-(q<<1);
       setTrajectory( sid, velocity, randSegaAngle() );
       setRotationSpeed( sid, SEGA_ANGLE(18) );
-      enableSymbol( sid, x, y, SEGA_ANGLE(0), scale );
+      enableSymbol( sid, sym->x, sym->y, SEGA_ANGLE(0), scale );
    }
 }
 
-static void explode( uint16_t x, uint16_t y ) {
+static void explode( symbol_t * sym ) {
    setRotationSpeed( S_EXPLODE0, SEGA_ANGLE(12) );
    setResizeSpeed( S_EXPLODE0, 25 );
-   enableSymbol( S_EXPLODE0, x, y, SEGA_ANGLE(0), 0x30 );
-
+   enableSymbol( S_EXPLODE0, sym->x, sym->y, SEGA_ANGLE(0), 0x30 );
    setRotationSpeed( S_EXPLODE1, SEGA_ANGLE(-12) );
    setResizeSpeed( S_EXPLODE1, 35 );
-   enableSymbol( S_EXPLODE1, x, y, SEGA_ANGLE(0), 0x10 );
+   enableSymbol( S_EXPLODE1, sym->x, sym->y, SEGA_ANGLE(0), 0x10 );
 }
+
+static inline bool checkColission( symbol_t *s0, symbol_t *s1 ) {
+   uint16_t x0 = s0->x-(HITBOX_SZ/2);
+   uint16_t x1 = s0->x+(HITBOX_SZ/2);
+   uint16_t y0 = s0->y-(HITBOX_SZ/2);
+   uint16_t y1 = s0->y+(HITBOX_SZ/2);
+   return ( s1->x > x0 && s1->x < x1 && s1->y > y0 && s1->y < y1 );
+}
+
 
 static uint8_t street_state;
 static int16_t street_y;
@@ -1246,7 +1210,6 @@ static void beginPlay(void) {
 
 
 static bool drawPlay(void) {
-   symbol_t *sym = (symbol_t*)symbols;
 
    uint16_t vec_angle = spinner_vector_angle( false );
    static uint8_t missle_dist = 0;
@@ -1254,67 +1217,66 @@ static bool drawPlay(void) {
    uint8_t buttons = PORT_374;
 
    static uint8_t ct=0;
-   if ( ct == 0 && !sym[ S_MISSLE ].visible ) {
+   if ( ct == 0 ) {
       if ( buttons & BUTTON_FIRE ) {
-         ct = 30;
-         SOUND_COMMAND = TANK_FIRE;
-         sym[ S_FLAME ].visible = true;
-         sym[ S_MISSLE ].rotation = vec_angle;
-         sym[ S_MISSLE ].visible = true;
-         missle_dist = 0;
+         for (uint8_t i=0; i<3; i++) {
+            uint8_t sym_ix = S_MISSLE0+i;
+            symbol_t *missle = &symbols[sym_ix];
+            if ( !missle->visible ) {
+               int16_t x=0, y=0;
+               vectorToXY( vec_angle, 80, &x, &y ); // offset to barrel's tip
+               enableSymbol( sym_ix, CENTER_X+x, CENTER_Y+y, vec_angle, 0 );
+               setTrajectory( sym_ix, 8, vec_angle );
+               ct = 30;
+               SOUND_COMMAND = TANK_FIRE;
+               symbols[ S_FLAME ].visible = true;
+               break;
+            }
+         }
       }
    }
    if (ct>=30) {
       ct++; 
-      vectors[ VFIELD_SIZE(V_BARREL) ] = ct;
+      vectors[ V_BARREL ].size = ct;
    }
    if (ct==45) {
-      sym[ S_FLAME ].visible = false;
+      symbols[ S_FLAME ].visible = false;
    }
    if (ct==60) {
-      vectors[ VFIELD_SIZE(V_BARREL) ] = SIZE(5);
+      vectors[ V_BARREL ].size = SIZE(5);
       ct = 0;
    }
 
    drawTank( vec_angle );
 
-   symbol_t *chopper = &((symbol_t*)symbols)[S_CHOPPER];
-   int16_t x,y = 0;
-   if ( sym[S_MISSLE].visible && drawMissle( &missle_dist, &x, &y ) ) {
-      uint16_t x0 = x-(HITBOX_SZ/2);
-      uint16_t x1 = x+(HITBOX_SZ/2);
-      uint16_t y0 = y-(HITBOX_SZ/2);
-      uint16_t y1 = y+(HITBOX_SZ/2);
-      if (  chopper->visible  ) {
-         if ( chopper->x > x0 && chopper->x < x1 && chopper->y > y0 && chopper->y < y1 ) {
-
-            score++;
-            sym[ S_MISSLE ].visible = false;
-            sym[ S_CHOPPER ].visible = false;
-            sym[ S_BLADE ].visible = false;
-
-            sound_track = 2;
-
-            explode( x, y );
-            shrapnel( x, y );
-         }
-      }
-   }
-
+   symbol_t *chopper = &symbols[S_CHOPPER];
+   symbol_t *tank = &symbols[S_TANK];
    if ( chopper->visible ) {
 
-      uint16_t x0 = CENTER_X-(HITBOX_SZ/2);
-      uint16_t x1 = CENTER_X+(HITBOX_SZ/2);
-      uint16_t y0 = CENTER_Y-(HITBOX_SZ/2);
-      uint16_t y1 = CENTER_Y+(HITBOX_SZ/2);
-      if ( chopper->x > x0 && chopper->x < x1 && chopper->y > y0 && chopper->y < y1 ) {
-         sym[ S_FLAME ].visible = false;
-         sym[ S_MISSLE ].visible = false;
-
-         explode( CENTER_X, CENTER_Y );
-
+      if ( checkColission( chopper, tank ) ) {
+         symbols[ S_FLAME ].visible = false;
+         symbols[ S_MISSLE0 ].visible = false;
+         symbols[ S_MISSLE1 ].visible = false;
+         symbols[ S_MISSLE2 ].visible = false;
+         explode( tank );
          SOUND_COMMAND = TANK_EXPLODE;
          return true; // game over
+      }
+
+      for (uint8_t i=0; i<3; i++) {
+         uint8_t sym_ix = S_MISSLE0+i;
+         symbol_t *missle = &symbols[sym_ix];
+         if ( missle->visible ) {
+            if ( checkColission( chopper, missle ) ) {
+               score++;
+               missle->visible = false;
+               symbols[ S_CHOPPER ].visible = false;
+               symbols[ S_BLADE ].visible = false;
+               explode( chopper );
+               shrapnel( chopper );
+               break;
+            }
+         }
       }
 
    } else {
@@ -1332,14 +1294,14 @@ static bool drawPlay(void) {
    // so move the street by changing the invisible offset vector at the
    // begining of the symbol and just leave origin at CENTER screen
 
-   vector_t *vec = (vector_t*)&vectors[ V_STREET * sizeof(vector_t) ];
+   vector_t *vec = &vectors[ V_STREET ];
    motion_t *m = &motion[ S_TANK ];
-   uint16_t angle = sym[ S_TANK ].rotation;
+   uint16_t angle = symbols[ S_TANK ].rotation;
 
    if ( buttons & BUTTON_THRUST ) {
       SOUND_COMMAND = TANK_MOVE;
       static uint8_t l = 10;
-      vectors[ VFIELD_SIZE(V_TREAD+1) ] = l;
+      vectors[ V_TREAD+1 ].size = l;
       l += 1;
       if ( l >40 ) l = 10;
    }
@@ -1365,8 +1327,8 @@ static bool drawPlay(void) {
          if ( angle >= SEGA_ANGLE(90) ) {
             setRotationSpeed( S_TANK, 0 );
             setRotationSpeed( S_TREAD, 0 );
-            sym[ S_TANK ].rotation = SEGA_ANGLE(90);
-            sym[ S_TREAD ].rotation = SEGA_ANGLE(90);
+            symbols[ S_TANK ].rotation = SEGA_ANGLE(90);
+            symbols[ S_TREAD ].rotation = SEGA_ANGLE(90);
             street_state++;
          }
          break;
@@ -1390,8 +1352,8 @@ static bool drawPlay(void) {
          if ( angle > SEGA_ANGLE(360-45) ) {
             setRotationSpeed( S_TANK, 0 );
             setRotationSpeed( S_TREAD, 0 );
-            sym[ S_TANK ].rotation = SEGA_ANGLE(0);
-            sym[ S_TREAD ].rotation = SEGA_ANGLE(0);
+            symbols[ S_TANK ].rotation = SEGA_ANGLE(0);
+            symbols[ S_TREAD ].rotation = SEGA_ANGLE(0);
             vec[0].angle = SEGA_ANGLE(180);
             vec[1].angle = SEGA_ANGLE(180);
             vec[2].angle = SEGA_ANGLE(180);
@@ -1408,9 +1370,9 @@ static bool drawPlay(void) {
                skewCubes();
             } else {
                // reset
-               resetSymbol( SYM_ADDR(S_CUBE0), MIN_X+10,    1024-300, 0, 0xe0 );
-               resetSymbol( SYM_ADDR(S_CUBE1), MAX_X-70, 1024,     0, 0xe0 );
-               resetSymbol( SYM_ADDR(S_CUBE2), MIN_X+10,    1024+300, 0, 0xe0 );
+               resetSymbol( S_CUBE0, MIN_X+10,    1024-300, 0, 0xe0 );
+               resetSymbol( S_CUBE1, MAX_X-70, 1024,     0, 0xe0 );
+               resetSymbol( S_CUBE2, MIN_X+10,    1024+300, 0, 0xe0 );
                vec[0].angle = SEGA_ANGLE(0);
                vec[1].angle = SEGA_ANGLE(0);
                vec[2].angle = SEGA_ANGLE(0);
@@ -1439,12 +1401,12 @@ static void keepPuffing(void) {
 }
 
 static void beginGameOver(void) {
-   if ( score <= high_score[2] ) {
+   if ( score <= high_score[0] ) {
       const char s[] = "game over";
-      drawString( SYM_ADDR(S_STRING), CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_RED, s, sizeof(s)-1 );
+      drawString( &symbols[S_STRING], CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_RED, s, sizeof(s)-1 );
    }  else {
       const char s[] = "high score";
-      drawString( SYM_ADDR(S_STRING), CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_YELLOW, s, sizeof(s)-1 );
+      drawString( &symbols[S_STRING], CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_YELLOW, s, sizeof(s)-1 );
    }
 
    colorize( (uint8_t*)V_ADDR(V_SMOKE), V_ADDR(V_LAST)-V_ADDR(V_SMOKE), SEGA_COLOR_WHITE );
@@ -1468,7 +1430,7 @@ static void beginGameOver(void) {
 
 static bool drawGameOver(void) {
    // wait for text to slide into place
-   if ( ((symbol_t*)symbols)[S_STRING].y > MAX_Y - 120 ) {
+   if ( symbols[S_STRING].y > MAX_Y - 120 ) {
       setStop( S_STRING );
       return true;
    }
@@ -1477,7 +1439,7 @@ static bool drawGameOver(void) {
 
 static void beginDiagnosticsIO( void ) {
    resetVectors();
-   symbols[ SFIELD_VISIBLE(S_STRING) ] = SEGA_VISIBLE|SEGA_LAST;
+   symbols[S_STRING].flags = SEGA_VISIBLE|SEGA_LAST;
    colorize( (uint8_t*)fontAddress('a'), fontAddress('z'+1)-fontAddress('a'), SEGA_COLOR_WHITE );
    colorize( (uint8_t*)fontAddress('0'), fontAddress('9'+1)-fontAddress('0'), SEGA_COLOR_WHITE );
    enableSymbol( S_SCORE0, CENTER_X-70, CENTER_Y-40, SEGA_ANGLE(0), 0xA0 );
@@ -1491,10 +1453,9 @@ static void drawDiagnosticsIO( void ) {
    uint8_t d0 = hex[ (angle >> 8) & 0x0F ];
    uint8_t d1 = hex[ (angle >> 4) & 0x0F ];
    uint8_t d2 = hex[ (angle >> 0) & 0x0F ];
-   symbol_t *sym = (symbol_t*)symbols;
-   sym[ S_SCORE0 ].vector_addr = fontAddress( d0 );
-   sym[ S_SCORE1 ].vector_addr = fontAddress( d1 );
-   sym[ S_SCORE2 ].vector_addr = fontAddress( d2 );
+   symbols[ S_SCORE0 ].vector_addr = fontAddress( d0 );
+   symbols[ S_SCORE1 ].vector_addr = fontAddress( d1 );
+   symbols[ S_SCORE2 ].vector_addr = fontAddress( d2 );
 
    static uint8_t last_f8 = 0xFF;
    uint8_t f8 = PORT_370;
@@ -1509,12 +1470,12 @@ static void drawDiagnosticsIO( void ) {
       s[5] = (f8 & BIT(5)) ? '1' : '0';
       s[6] = (f8 & BIT(6)) ? '1' : '0';
       s[7] = (f8 & BIT(7)) ? '1' : '0';
-      drawString( SYM_ADDR(S_STRING), CENTER_X-100, CENTER_Y+40, 0x80, SEGA_COLOR_WHITE, s, 8 );
+      drawString( &symbols[S_STRING], CENTER_X-100, CENTER_Y+40, 0x80, SEGA_COLOR_WHITE, s, 8 );
    }
 }
 
 static void writeVec( vector_t *vec, uint8_t size, uint8_t color, uint8_t last ) {
-   memset( vec, 0x00, sizeof(vector_t) );
+   memset( (uint8_t*)vec, 0x00, sizeof(vector_t) );
    vec->color = color;
    vec->visible = 1;
    vec->last = last;
@@ -1523,28 +1484,27 @@ static void writeVec( vector_t *vec, uint8_t size, uint8_t color, uint8_t last )
 }
 
 static void beginDiagnosticsGrid( void ) {
-   vector_t *vec = (vector_t*)vectors;
    // MAX_X-MIN_X = 900
-   writeVec( vec,   240, SEGA_COLOR_RED, 0 );
-   writeVec( vec+1, 240, SEGA_COLOR_BLUE, 0 );
-   writeVec( vec+2, 240, SEGA_COLOR_GREEN, 0 );
-   writeVec( vec+3, 180, SEGA_COLOR_WHITE, 1 );
+   writeVec( &vectors[0], 240, SEGA_COLOR_RED, 0 );
+   writeVec( &vectors[1], 240, SEGA_COLOR_BLUE, 0 );
+   writeVec( &vectors[2], 240, SEGA_COLOR_GREEN, 0 );
+   writeVec( &vectors[3], 180, SEGA_COLOR_WHITE, 1 );
 
    // MAX_Y-MIN_Y = 800
-   writeVec( vec+4, 255, SEGA_COLOR_YELLOW, 0 );
-   writeVec( vec+5, 9,  SEGA_COLOR_YELLOW, 0 );
-   writeVec( vec+6, 255, SEGA_COLOR_CYAN, 0 );
-   writeVec( vec+7, 9,  SEGA_COLOR_CYAN, 0 );
-   writeVec( vec+8, 255, SEGA_COLOR_MAGENTA, 0 );
-   writeVec( vec+9, 10,  SEGA_COLOR_MAGENTA, 1 );
+   writeVec( &vectors[4], 255, SEGA_COLOR_YELLOW, 0 );
+   writeVec( &vectors[5],   9,  SEGA_COLOR_YELLOW, 0 );
+   writeVec( &vectors[6], 255, SEGA_COLOR_CYAN, 0 );
+   writeVec( &vectors[7],   9,  SEGA_COLOR_CYAN, 0 );
+   writeVec( &vectors[8], 255, SEGA_COLOR_MAGENTA, 0 );
+   writeVec( &vectors[9],  10,  SEGA_COLOR_MAGENTA, 1 );
 
-   symbol_t *sym = (symbol_t*)symbols;
+   symbol_t *sym = symbols;
    for (uint16_t y=MIN_Y; y<MAX_Y+1; y+=(MAX_Y-MIN_Y)/12) {
       sym->visible = 1;
       sym->last = 0;
       sym->x = MIN_X;
       sym->y = y;
-      sym->vector_addr = (uint16_t)vec;
+      sym->vector_addr = (uint16_t)&vectors[0];
       sym->rotation = SEGA_ANGLE(90);
       sym->scale = 0x80;
       sym++;
@@ -1555,7 +1515,7 @@ static void beginDiagnosticsGrid( void ) {
       sym->last = 0;
       sym->x = x;
       sym->y = MIN_Y;
-      sym->vector_addr = (uint16_t)(vec+4);
+      sym->vector_addr = (uint16_t)&vectors[4];
       sym->rotation = SEGA_ANGLE(0);
       sym->scale = 0x80;
       sym++;
@@ -1599,7 +1559,7 @@ static void super_loop(void) {
 
          case game_state_game_over:
             if ( drawGameOver() ) {
-               if ( score <= high_score[2] ) {
+               if ( score <= high_score[0] ) {
                   last_tick = system_tick;
                   game_state = game_state_game_over_pause;
                } else {

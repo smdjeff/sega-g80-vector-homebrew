@@ -158,7 +158,6 @@ __sfr __at 0x3f SOUND_COMMAND;
 
 #define V_ADDR(x) (VECTOR_RAM+SYMBOLS_SZ+((x)*4))
 #define S_ADDR(x) (VECTOR_RAM + ((x)*10))
-#define SYM_ADDR(x) ((symbol_t*)(VECTOR_RAM+((x)*10)))
 
 typedef struct {
    union {

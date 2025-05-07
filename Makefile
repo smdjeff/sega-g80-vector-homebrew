@@ -21,6 +21,8 @@ clean:
 CFLAGS = -DENABLE_BOOTROM
 #CFLAGS += -DMAME_BUILD
 
+MAME = /Users/jmathews/Downloads/mame-master/mamed
+
 gamerom: prereq bootrom
 	@echo "building 32k rom at 0x800 for use with sega-boot-rom in cpu rom socket"
 	zcc +z80 --list -m -vn -SO3 -compiler=sdcc -startup=1 font.c math.c main.c usb.c -o $@ -create-app $(CFLAGS) -Cz"--rombase=0x0800 --romsize=30720"
@@ -59,7 +61,7 @@ mame: roms
 	zip roms.zip startrek/*
 	rm -r startrek
 	mv roms.zip build/startrek.zip
-	mame -rp ./build startrek
+	$(MAME) -rp ./build startrek
 
 # ROM Emulator https://github.com/Kris-Sekula/EPROM-EMU-NG/
 # python3 -m pip install serial
