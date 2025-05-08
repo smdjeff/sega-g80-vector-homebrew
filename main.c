@@ -19,6 +19,12 @@ static char* high_name[3] = { "amy", "sno", "jef" };
 static game_state_t game_state = game_state_boot;
 static uint8_t sound_track = 0;
 
+#define CUBE_X0 (MIN_X+40)
+#define CUBE_X1 (MAX_X-70)
+#define CUBE_Y0 (CENTER_Y-300)
+#define CUBE_Y1 (CENTER_Y)
+#define CUBE_Y2 (CENTER_Y+300)
+
 
 // NMI int (the cpu board button was pushed)
 void z80_nmi(void) __critical __interrupt {
@@ -362,43 +368,43 @@ static inline void stretch5(uint8_t *p, uint16_t i) {
      SEGA_CLEAR,                       0,         LE(SEGA_ANGLE(270)), // 8 left adjustable
      SEGA_CLEAR,                       128,       LE(SEGA_ANGLE(270)), // 9 left fixed offset for middle of road
 
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(90)),  // 10
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(90)),  // 11
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(90)),  // 12
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(90)),  // 13
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(90)),  // 14
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(90)),  // 10
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(90)),  // 11
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(90)),  // 12
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(90)),  // 13
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(90)),  // 14
 
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(0)),   // 15
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(0)),   // 16
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(0)),   // 17
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(0)),   // 18
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(0)),   // 15
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(0)),   // 16
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(0)),   // 17
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(0)),   // 18
 
      SEGA_CLEAR,                       255,       LE(SEGA_ANGLE(90)),  // 19
 
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 20
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 21
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 22
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 23
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 24
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(180)),  // 20
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(180)),  // 21
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(180)),  // 22
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(180)),  // 23
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(180)),  // 24
 
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(270)),  // 25
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(270)),  // 26
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(270)),  // 27
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(270)),  // 28
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(270)),  // 29
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(270)),  // 25
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(270)),  // 26
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(270)),  // 27
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(270)),  // 28
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(270)),  // 29
 
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 30
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 31
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 32
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(180)),  // 33
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(180)),  // 30
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(180)),  // 31
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(180)),  // 32
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(180)),  // 33
 
      SEGA_CLEAR,                       255,       LE(SEGA_ANGLE(270)),  // 34
 
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(0)),  // 35
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(0)),  // 36
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(0)),  // 37
-     SEGA_COLOR_WHITE,                 255,       LE(SEGA_ANGLE(0)),  // 38
-     SEGA_COLOR_WHITE|SEGA_LAST,       255,       LE(SEGA_ANGLE(0)),  // 39
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(0)),  // 35
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(0)),  // 36
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(0)),  // 37
+     SEGA_COLOR_CYAN,                 255,       LE(SEGA_ANGLE(0)),  // 38
+     SEGA_COLOR_CYAN|SEGA_LAST,       255,       LE(SEGA_ANGLE(0)),  // 39
 
 
      #define HITBOX_SZ 80
@@ -524,11 +530,11 @@ static inline void stretch5(uint8_t *p, uint16_t i) {
       0,            LE(1024), LE(MAX_Y-35), LE(V_ADDR(V_BLADE)), LE(0),     0x50,
 
       #define S_CUBE0    18
-      0, LE(MIN_X+10), LE(1024-300), LE(V_ADDR(V_CUBE0)), LE(0),     0xe0,
+      0, LE(CUBE_X0), LE(CUBE_Y0), LE(V_ADDR(V_CUBE0)), LE(0),     0xe0,
       #define S_CUBE1    19
-      0, LE(MAX_X-70), LE(1024), LE(V_ADDR(V_CUBE1)), LE(0),     0xe0,
+      0, LE(CUBE_X1), LE(CUBE_Y1), LE(V_ADDR(V_CUBE1)), LE(0),     0xe0,
       #define S_CUBE2    20
-      0, LE(MIN_X+10), LE(1024+300), LE(V_ADDR(V_CUBE2)), LE(0),    0xe0,
+      0, LE(CUBE_X0), LE(CUBE_Y2), LE(V_ADDR(V_CUBE2)), LE(0),    0xe0,
 
       #define S_STREET   21
       0,  LE(1024), LE(1024), LE(V_ADDR(V_STREET)), LE(0),    0x80,
@@ -571,7 +577,6 @@ symbol_t *symbols = (symbol_t*)(VECTOR_RAM); // must be at the top of vector ram
 // the vector table is useful to describe vectors, but since scale, position and rotation
 // are all set in the symbol drawing list that vector table might as well be in rom
 #define VECTOR_RAM_BASE (VECTOR_RAM+SYMBOLS_SZ)
-#define FONT_RAM_BASE   (V_ADDR(V_LAST))
 vector_t *vectors = (vector_t*)(VECTOR_RAM_BASE); // arbitrary location in vector ram
 
 typedef struct {
@@ -659,10 +664,6 @@ static void vector_init(void) {
    memcpy( (uint8_t*)vectors, vector, sizeof(vector) );
 
    installFonts( (uint16_t)vectors+sizeof(vector) );
-   // TODO: this should break the build if it doesn't fit.
-   // #if FONT_RAM_BASE+FONT_RAM_SIZE > (VECTOR_RAM+VECTOR_RAM_SZ)
-   //     #error 'fonts do not fit in memory'
-   // #endif
 }
 
 
@@ -769,21 +770,21 @@ static void colorizeCube( vector_t *vec, uint8_t quad ) {
    switch ( quad ) {
       case 1: // top right
          vec[1].color = SEGA_COLOR_CYAN;
-         vec[2].color = SEGA_COLOR_GRAY;
-         vec[3].color = SEGA_COLOR_GRAY;
+         vec[2].color = SEGA_COLOR_CYAN2;
+         vec[3].color = SEGA_COLOR_CYAN2;
          vec[4].color = SEGA_COLOR_CYAN;
-         vec[9].color = SEGA_COLOR_GRAY;
+         vec[9].color = SEGA_COLOR_CYAN2;
          vec[11].color = SEGA_COLOR_CYAN;
          vec[12].color = SEGA_COLOR_CYAN;
          vec[17].color = SEGA_COLOR_CYAN|SEGA_LAST;
          break;
       case 2: // top left
-         vec[1].color = SEGA_COLOR_GRAY;
-         vec[2].color = SEGA_COLOR_GRAY;
+         vec[1].color = SEGA_COLOR_CYAN2;
+         vec[2].color = SEGA_COLOR_CYAN2;
          vec[3].color = SEGA_COLOR_CYAN;
          vec[4].color = SEGA_COLOR_CYAN;
          vec[9].color = SEGA_COLOR_CYAN;
-         vec[11].color = SEGA_COLOR_GRAY;
+         vec[11].color = SEGA_COLOR_CYAN2;
          vec[12].color = SEGA_COLOR_CYAN;
          vec[17].color = SEGA_COLOR_CYAN|SEGA_LAST;
          break;
@@ -793,19 +794,19 @@ static void colorizeCube( vector_t *vec, uint8_t quad ) {
          vec[3].color = SEGA_COLOR_CYAN;
          vec[4].color = SEGA_COLOR_CYAN;
          vec[9].color = SEGA_COLOR_CYAN;
-         vec[11].color = SEGA_COLOR_GRAY;
-         vec[12].color = SEGA_COLOR_GRAY;
-         vec[17].color = SEGA_COLOR_GRAY|SEGA_LAST;
+         vec[11].color = SEGA_COLOR_CYAN2;
+         vec[12].color = SEGA_COLOR_CYAN2;
+         vec[17].color = SEGA_COLOR_CYAN2|SEGA_LAST;
          break;
       case 4: // bottom right
          vec[1].color = SEGA_COLOR_CYAN;
          vec[2].color = SEGA_COLOR_CYAN;
-         vec[3].color = SEGA_COLOR_GRAY;
-         vec[4].color = SEGA_COLOR_GRAY;
+         vec[3].color = SEGA_COLOR_CYAN2;
+         vec[4].color = SEGA_COLOR_CYAN2;
          vec[9].color = SEGA_COLOR_CYAN;
          vec[11].color = SEGA_COLOR_CYAN;
          vec[12].color = SEGA_COLOR_CYAN;
-         vec[17].color = SEGA_COLOR_GRAY|SEGA_LAST;
+         vec[17].color = SEGA_COLOR_CYAN2|SEGA_LAST;
          break;
    }
 }
@@ -859,10 +860,10 @@ static void moveCubesY( void ) {
 }
 
 
-static void skewCubes( void ) {
+static void skewCubes( bool reset ) {
    static uint8_t last_quad[3] = {0xFF,0xFF,0xFF};
    static uint8_t ct = 0;
-   if (++ct<9) return;
+   if ((++ct<9) && (!reset)) return;
    ct = 0;
 
    static uint8_t ix = 0;
@@ -874,7 +875,7 @@ static void skewCubes( void ) {
    symbol_t *sym = &symbols[ S_CUBE0 + ix ];
 
    uint8_t quad = quadrant( sym->x, sym->y );
-   if ( quad != last_quad[ ix ] ) {
+   if ( quad != last_quad[ ix ] || reset ) {
       colorizeCube( vec, quad );
       last_quad[ ix ] = quad;
    }
@@ -1041,8 +1042,8 @@ static bool drawAttract( void ) {
          }
          if ( system_tick - last_tick > SECONDS(3) ) {
             sym->visible = false;
-            state_ix = 0;
-            state_iy = CENTER_Y+250;
+            state_ix = 2;
+            state_iy = CENTER_Y-250;
             state++;
          }
          break; }
@@ -1055,8 +1056,8 @@ static bool drawAttract( void ) {
          digits3( &s[4], &s[5], &s[6], high_score[state_ix] );
          drawString( &symbols[S_STRING], 0, state_iy, 0xA0, SEGA_COLOR_CYAN, s, sizeof(s) );
          setTrajectory( S_STRING, 20, SEGA_ANGLE(90) );
-         state_ix++;
-         state_iy -= 250;
+         state_ix--;
+         state_iy += 250;
          state++;
          break; }
 
@@ -1206,6 +1207,9 @@ static void beginPlay(void) {
    enableSymbol( S_SCORE2, CENTER_X+40, MIN_Y+10, SEGA_ANGLE(0), 0x80 );
    drawScore(score, true);
    spinner_vector_angle( true );
+   skewCubes(true);
+   skewCubes(true);
+   skewCubes(true);
 }
 
 
@@ -1314,7 +1318,7 @@ static bool drawPlay(void) {
                stretch3( &vec[0].size, street_y );
                street_y -= 1;
                moveCubesY();
-               skewCubes();
+               skewCubes( false );
             } else {
                setRotationSpeed( S_TANK, SEGA_ANGLE(12) );
                setRotationSpeed( S_TREAD, SEGA_ANGLE(12) );
@@ -1339,7 +1343,7 @@ static bool drawPlay(void) {
                stretch5( &vec[4].size, street_x );
                street_x += 1;
                moveCubesX();
-               skewCubes();
+               skewCubes( false );
             } else {
                setRotationSpeed( S_TANK, SEGA_ANGLE(-12) );
                setRotationSpeed( S_TREAD, SEGA_ANGLE(-12) );
@@ -1363,16 +1367,16 @@ static bool drawPlay(void) {
       case 4:
          // moving up
          if ( buttons & BUTTON_THRUST ) {
-            if ( street_y < (255*3) ) {
+            if ( street_y < (570) ) {
                stretch3( &vec[0].size, street_y );
                street_y += 1;
                moveCubesY();
-               skewCubes();
+               skewCubes( false );
             } else {
                // reset
-               resetSymbol( S_CUBE0, MIN_X+10,    1024-300, 0, 0xe0 );
-               resetSymbol( S_CUBE1, MAX_X-70, 1024,     0, 0xe0 );
-               resetSymbol( S_CUBE2, MIN_X+10,    1024+300, 0, 0xe0 );
+               resetSymbol( S_CUBE0, CUBE_X0, CUBE_Y0, 0, 0xe0 );
+               resetSymbol( S_CUBE1, CUBE_X1, CUBE_Y1, 0, 0xe0 );
+               resetSymbol( S_CUBE2, CUBE_X0, CUBE_Y2, 0, 0xe0 );
                vec[0].angle = SEGA_ANGLE(0);
                vec[1].angle = SEGA_ANGLE(0);
                vec[2].angle = SEGA_ANGLE(0);
