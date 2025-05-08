@@ -14,8 +14,8 @@ static volatile uint8_t nmi_counter = 0;
 static volatile uint16_t system_tick = 0;
 static volatile uint8_t _coin_counter = 0;
 static uint8_t score = 0;
-static uint8_t high_score[3] = { 1, 5, 10 };
-static char* high_name[3] = { "amy", "sno", "jef" };
+static uint8_t high_score[3] = { 20, 15, 1 };
+static char high_name[3][4] = { "jef", "sno", "amy" };
 static game_state_t game_state = game_state_boot;
 static uint8_t sound_track = 0;
 
@@ -688,7 +688,7 @@ static uint16_t spinner_vector_angle( bool reset ) {
       // spinner angle in degrees is about 5.6 * value
       // vector is SEGA_ANGLE( angle ), so 2.845 * 5.6 = ~16
       #ifdef MAME_BUILD
-         delta >>= 2; // mame seems to increment the spinner inaccurately
+         delta >>= 1; // mame seems to increment the spinner inaccurately
       #else
          // seems to work great on real hardware
          delta <<= 4;  // x 16
@@ -1088,12 +1088,39 @@ static bool drawAttract( void ) {
 }
 
 
+static uint8_t high_index = 0;
+
 static void beginDrawInitials( void ) {
    say( HIGH_SCORE );
    enableSymbol( S_NAME0, CENTER_X-70, CENTER_Y-220, SEGA_ANGLE(0), 0xA0 );
    enableSymbol( S_NAME1, CENTER_X-10, CENTER_Y-220, SEGA_ANGLE(0), 0xA0 );
    enableSymbol( S_NAME2, CENTER_X+50, CENTER_Y-220, SEGA_ANGLE(0), 0xA0 );
    spinner_vector_angle( true );
+
+   if ( score >= high_score[0] ) {
+      high_index = 0;
+      high_score[ 2 ] = high_score[ 1 ];
+      high_score[ 1 ] = high_score[ 0 ];
+      high_score[ 0 ] = score;
+      memcpy( high_name[2], high_name[1], 3 );
+      memcpy( high_name[1], high_name[0], 3 );
+      memset( high_name[0], 0x00, 3 );
+      return;
+   }
+   if ( score >= high_score[1] ) {
+      high_index = 1;
+      high_score[ 2 ] = high_score[ 1 ];
+      high_score[ 1 ] = score;
+      memcpy( high_name[2], high_name[1], 3 );
+      memset( high_name[1], 0x00, 3 );
+      return;
+   }
+   if ( score >= high_score[2] ) {
+      high_index = 2;
+      high_score[ 2 ] = score;
+      memset( high_name[2], 0x00, 3 );
+      return;
+   }
 }
 
 
@@ -1128,9 +1155,11 @@ static bool drawInitials( void ) {
    uint8_t buttons = PORT_374;
    if ((buttons & BUTTON_FIRE) && ((system_tick - last_button_tick) > 50)) {
       last_button_tick = system_tick;
+      high_name[  high_index ][ ix ] = ch;
       *addr[ix] = fontAddress( ch );
       ix++;
       if (ix == 3) {
+         ix = 0;
          say( CONGRATULATIONS );
          uint16_t last_tick = system_tick;
          // rainbow effect
@@ -1405,7 +1434,7 @@ static void keepPuffing(void) {
 }
 
 static void beginGameOver(void) {
-   if ( score <= high_score[0] ) {
+   if ( score <= high_score[2] ) {
       const char s[] = "game over";
       drawString( &symbols[S_STRING], CENTER_X-280, MIN_Y, 0xFE, SEGA_COLOR_RED, s, sizeof(s)-1 );
    }  else {
@@ -1563,7 +1592,7 @@ static void super_loop(void) {
 
          case game_state_game_over:
             if ( drawGameOver() ) {
-               if ( score <= high_score[0] ) {
+               if ( score < high_score[2] ) {
                   last_tick = system_tick;
                   game_state = game_state_game_over_pause;
                } else {
